@@ -1,0 +1,21 @@
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Sid": "Statement1",
+			"Principal": {"AWS": "arn:aws:iam::381492194835:root"},
+			"Effect": "Allow",
+			"Action": [
+				"s3:GetObject"
+			],
+			"Resource": [
+				"arn:aws:s3:::baqueet-p3/*"
+			],
+			"Condition": {
+				"StringEquals": {
+					"aws:SourceVpce": "vpc-0c6c93ea9601a9f33"
+				}
+			}
+		}
+	]
+}

@@ -1,0 +1,522 @@
+% !TEX program = xelatex
+% ¡Recuerda compilar con XeLaTeX o LuaLaTeX!
+\documentclass{article}
+
+% --- Cargar nuestro fichero de estilo ---
+% Se asume que paper_style.sty está disponible o se usan paquetes estándar.
+\usepackage{paper_style}
+
+% --- PAQUETES PARA EL CONTENIDO DEL DOCUMENTO ---
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{soul}
+\usepackage{xcolor}
+
+
+% --- Información del Paper ---
+\title{Informe: \\ Práctica 4: Redes y Conectividad Avanzada y Contenedores}
+\author{
+	Jordi Blasco Lozano \\
+	\small Infraestructuras y Servicios Cloud \\
+	\small Universidad de Alicante
+}
+\date{\today}
+
+% --- Comienzo del Documento ---
+\begin{document}
+	
+	\maketitle
+
+	\begin{abstract}
+	\noindent En esta práctica se ha diseñado y desplegado una arquitectura cloud para un sistema de recomendaciones, empleando segmentación de red en una VPC, balanceo de carga, despliegue canario y transición a contenedores. Se han creado subredes públicas y privadas distribuidas en dos zonas de disponibilidad, configurado reglas de control de acceso (SGs y NACLs), y se implementó un Application Load Balancer para distribuir tráfico entre versiones V1 y V2 del modelo.
+	\end{abstract}
+	
+
+	
+	\tableofcontents
+
+	\newpage
+
+	\section{Configuración de la VPC}
+
+\subsection{Segmentación y subredes}
+
+\noindent
+\begin{minipage}[c]{0.61\textwidth}
+Para el despliegue del sistema de recomendaciones se requiere una estructura específica en la VPC. La segmentación se realiza mediante bloques CIDR dedicados para cada subred, con máscara /24. El enunciado exige utilizar \texttt{10.0.10.0/24} para la subred pública principal y \texttt{10.0.20.0/24} para la privada principal. Al emplear dos zonas de disponibilidad, se crean cuatro subredes:
+
+\vspace{0.2cm}
+
+\begin{itemize}
+    \item Pública 1: \texttt{10.0.10.0/24}
+	\item Pública 2: \texttt{10.0.30.0/24}
+    \item Privada 1: \texttt{10.0.20.0/24}
+    \item Privada 2: \texttt{10.0.40.0/24}
+\end{itemize}
+
+\vspace{0.2cm}
+
+Cada subred permite hasta 256 direcciones IP individuales gracias a la máscara /24.
+\end{minipage}%
+\hfill
+\begin{minipage}[c]{0.35\textwidth}
+	\centering
+	\includegraphics[width=\textwidth]{image copy 13.png}
+	\captionof{figure}{CIDR subredes}
+\end{minipage}
+
+\vspace{0.5cm}
+
+\subsection{Creación simplificada de la VPC}
+Para facilitar el proceso y evitar configuraciones manuales, AWS proporciona el botón de "VPC and more". Seleccionando esta opción durante la creación, es posible definir directamente los bloques CIDR personalizados para cada subred desde el menú desplegable, ajustando el tamaño y las direcciones antes de crear la VPC.
+
+\subsection{NAT Gateway y Endpoint S3 automatizados}
+Adicionalmente, desde el mismo "VPC and more" se permite añadir el NAT Gateway para las subredes privadas y el endpoint de S3. Esto implica que tanto el NAT Gateway como el endpoint de S3 quedarán automáticamente conectados a las tablas de rutas necesarias de cada subred, sin necesidad de modificar manualmente las tablas de ruta después de la creación de la VPC. Cuando salgamos de la pestaña de configuración obtendremos el siguiente esquema de nuestra VPC, listo y funcional.
+
+
+	\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{image copy 14.png}
+	\caption{Esquema VPC}
+	\end{figure}
+
+\newpage
+
+
+	\section{Configuración del S3}
+
+\noindent
+\begin{minipage}[c]{0.48\textwidth}
+	
+	Para descargar los archivos y los modelos nos tendremos que conectar a un S3 que almacene estos datos. Esto lo haremos mediante el S3 endpoint que conectamos en el paso anterior. 
+	
+	\vspace{0.3cm}
+	
+	Subiremos los archivos siguiendo la estructura del user data proporcionado, de forma que tengamos estos tres archivos (el modelo.pkl simplemente servirá como archivo de prueba sin valor, no se ejecutará, pero sí descargará):
+
+	\begin{itemize}
+		\item \texttt{/backend/model\_v1\_prod.py}
+		\item \texttt{/backend/model\_v2\_canary.py}
+		\item \texttt{/backend/modelo.pkl}
+	\end{itemize}
+\end{minipage}%
+\hfill
+\begin{minipage}[c]{0.48\textwidth}
+	\centering
+	\includegraphics[width=\textwidth]{image copy 15.png}
+\end{minipage}
+
+\vspace{0.5cm}
+
+\subsection{Política del bucket}
+	Como en la práctica anterior, en esta también tenemos que permitir el acceso al bucket usando la política, de forma que permita accesos de descarga únicamente si utilizamos nuestro endpoint específico. Para esto definiremos el siguiente json:
+
+\begin{lstlisting}[style=consola, language=bash, caption={política-s3.json}]
+{
+    "Version": "2012-10-17",
+    "Statement": 
+    [
+        {
+            "Sid": "AllowBackendFolderViaVPCE",
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": ["s3:GetObject"],
+            "Resource": "arn:aws:s3:::p4-buquet/backend/*",
+            "Condition": 
+            {
+                "StringEquals": 
+                {
+                    "aws:SourceVpce": "vpce-0aa42de173d26c739"
+                }
+            }
+        }
+        
+    ]
+}\end{lstlisting}
+
+\newpage
+
+	
+		
+	\section{Configuración de la seguridad}
+
+	La seguridad de esta arquitectura está estructurada en varias capas y cada componente (subred pública, subred privada, bastión, backend, ALB) tiene reglas específicas tanto en NACLs como en Security Groups, diseñadas para minimizar la superficie de ataque y garantizar que solo el tráfico necesario fluya entre los recursos.
+\subsection{NACL pública}
+	Para las subredes públicas (10.0.10.0/24 y 10.0.30.0/24), las NACLs permiten la entrada de peticiones HTTP (puerto 80) desde cualquier origen para el ALB, y entrada SSH (puerto 22) únicamente desde mi IP pública, facilitando la gestión y el acceso seguro. Además, se permite la entrada de puertos efímeros provenientes de las subredes privadas, para soportar las respuestas a las conexiones originadas en las instancias backend. En cuanto a la salida, la NACL pública autoriza puertos efímeros hacia cualquier destino y la salida HTTP (puerto 80) hacia Internet para el ALB. Todo tráfico no contemplado se deniega, permitiendo sólo los flujos estrictamente necesarios.
+
+
+
+% NACL Pública (aplicable a pública-1: 10.0.10.0/24 y pública-2: 10.0.30.0/24)
+\begin{table}[H]
+\centering
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}cccccc}
+\hline
+Nº regla & Tráfico     & Protocolo & Puerto        & Origen             & Acción \\
+\hline
+100      & HTTP        & TCP       & 80            & 0.0.0.0/0          & Allow  \\
+110      & SSH         & TCP       & 22            & Mi IP pública      & Allow  \\
+120      & efímero   & TCP       & 1024-65535    & 10.0.20.0/24 y 10.0.40.0/24 & Allow  \\
+*        & All         & All       & All           & All                & Deny   \\
+\hline
+\end{tabular*}
+\caption{NACL Pública - Reglas de entrada (pública-1 y pública-2)}
+\end{table}
+
+\begin{table}[H]
+\centering
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}cccccc}
+\hline
+Nº regla & Tráfico     & Protocolo & Puerto        & Destino            & Acción \\
+\hline
+100      & efímero   & TCP       & 1024-65535    & 0.0.0.0/0          & Allow  \\
+110      & HTTP Resp.  & TCP       & 80            & 0.0.0.0/0          & Allow  \\
+*        & All         & All       & All           & All                & Deny   \\
+\hline
+\end{tabular*}
+\caption{NACL Pública - Reglas de salida (pública-1 y pública-2)}
+\end{table}
+\subsection{NACL privada}
+Las NACLs de las subredes privadas (10.0.20.0/24 y 10.0.40.0/24) son aún más restrictivas. Permiten la entrada solamente desde las subredes públicas por el puerto 8000 (tráfico backend API), SSH desde la IP privada del bastión para gestión, y entrada a través del endpoint de S3 para descargas. En cuanto a la salida, estas NACLs permiten puertos efímeros únicamente hacia las subredes públicas, para que las respuestas de las aplicaciones backend puedan volver correctamente al ALB, y salida por el puerto 443 hacia el endpoint S3 para acceso seguro a los datos almacenados. Todo lo demás queda explícitamente bloqueado.
+
+% NACL Privada (aplicable a privada-1: 10.0.20.0/24 y privada-2: 10.0.40.0/24)
+\begin{table}[H]
+\centering
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}cccccc}
+\hline
+Nº regla & Tráfico     & Protocolo & Puerto        & Origen             & Acción \\
+\hline
+100      & Backend In  & TCP       & 8000          & 10.0.10.0/24 y 10.0.30.0/24 & Allow  \\
+110      & SSH         & TCP       & 22            & IP privada Bastión & Allow  \\
+120      & S3 Endpoint & TCP       & 443           & 0.0.0.0/0   & Allow  \\
+*        & All         & All       & All           & All                & Deny   \\
+\hline
+\end{tabular*}
+\caption{NACL Privada - Reglas de entrada (privada-1 y privada-2)}
+\end{table}
+
+\begin{table}[H]
+\centering
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}cccccc}
+\hline
+Nº regla & Tráfico      & Protocolo & Puerto      & Destino            & Acción \\
+\hline
+100      & efímero    & TCP       & 1024-65535  & 10.0.10.0/24 y 10.0.30.0/24 & Allow  \\
+110      & S3 Endpoint  & TCP       & 443         & 0.0.0.0/0   & Allow  \\
+*        & All          & All       & All         & All                & Deny   \\
+\hline
+\end{tabular*}
+\caption{NACL Privada - Reglas de salida (privada-1 y privada-2)}
+\end{table}
+\subsection{Segurity grups}
+A nivel de Security Group, cada recurso se configura con reglas mínimas y específicas. El ALB solamente acepta conexiones HTTP desde cualquier origen y, voy a poner también que acepte SSH desde mi IP por si necesitara conectarme. Las instancias backend restringen su entrada al puerto 8000 proveniente del SG del ALB y SSH desde el SG del bastión, evitando cualquier acceso no autorizado. Finalmente, las reglas de salida permiten el flujo de datos hacia el ALB, Internet (para descargas), y hacia el endpoint S3. El bastión está configurado para aceptar conexiones SSH únicamente desde mi IP, y permite que sus conexiones salientes alcancen las instancias backend.
+
+
+% Security Group ALB
+\begin{table}[H]
+\centering
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}ccccc}
+\hline
+Tráfico             & Protocolo & Puerto & Origen         & Acción \\
+\hline
+HTTP                & TCP       & 80     & 0.0.0.0/0      & Allow  \\
+SSH    & TCP       & 22     & Mi IP pública  & Allow  \\
+\hline
+\end{tabular*}
+\caption{SG ALB - Reglas de entrada}
+\end{table}
+
+\begin{table}[H]
+\centering
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}ccccc}
+\hline
+Tráfico       & Protocolo & Puerto & Destino               & Acción \\
+\hline
+HTTP/Backend  & TCP       & 8000   & SG-Backend            & Allow  \\
+efímero     & TCP       & 1024-65535 & 0.0.0.0/0  & Allow  \\
+\hline
+\end{tabular*}
+\caption{SG ALB - Reglas de salida}
+\end{table}
+
+
+
+% Security Group Backend
+\begin{table}[H]
+\centering
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}ccccc}
+\hline
+Tráfico        & Protocolo & Puerto & Origen      & Acción \\
+\hline
+API/Backend    & TCP       & 8000   & SG-ALB      & Allow  \\
+SSH            & TCP       & 22     & SG-Bastión  & Allow  \\
+\hline
+\end{tabular*}
+\caption{SG Backend - Reglas de entrada}
+\end{table}
+
+\begin{table}[H]
+\centering
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}ccccc}
+\hline
+Tráfico       & Protocolo & Puerto        & Destino         & Acción \\
+\hline
+efímero     & TCP       & 1024-65535   & 0.0.0.0/0  & Allow  \\
+S3 Endpoint   & TCP       & 443          & 0.0.0.0/0     & Allow  \\
+\hline
+\end{tabular*}
+\caption{SG Backend - Reglas de salida}
+\end{table}
+
+
+
+% Security Group Bastion
+\begin{table}[H]
+\centering
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}ccccc}
+\hline
+Tráfico & Protocolo & Puerto & Origen         & Acción \\
+\hline
+SSH     & TCP       & 22     & Mi IP pública  & Allow  \\
+\hline
+\end{tabular*}
+\caption{SG Bastion - Reglas de entrada}
+\end{table}
+
+\begin{table}[H]
+\centering
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}ccccc}
+\hline
+Tráfico   & Protocolo & Puerto & Destino         & Acción \\
+\hline
+SSH       & TCP       & 22     & SG-Backend      & Allow  \\
+efímero & TCP       & 1024-65535 & 0.0.0.0/0 & Allow  \\
+\hline
+\end{tabular*}
+\caption{SG Bastion - Reglas de salida}
+\end{table}
+
+\section{Instancias}
+
+Después de haber configurado todo el entorno debemos de lanzar las instancias. Para ahorrar tiempo instalaré en una instancia de la subred publica todas las dependencias, tales como: python awscli, etc. Esto lo hare para poder crear una AMI de esta instancia con todas las dependencias instaladas. Posteriormente creare una instancia privada a partir de la AMI, a esta instancia me conectaré mediante el bastión y probare que todos los comandos del user data me funcionen correctamente. Una vez que me asegure de que el user data funciona podremos configurar el balanceador de carga.\\
+
+\subsection{Creación de la AMI}
+Una vez tengamos todo instalado creamos la AMI. He tenido que cambiar un poco los comandos, sobre todo el de awscli porque no me dejaba instalarlo de la forma en la que estaba en la práctica (no encontraba el paquete). He instalado únicamente lo siguiente en la AMI:
+
+
+\begin{lstlisting}[style=consola, language=bash, caption={dependencias.sh}]
+sudo apt-get update -y
+sudo apt-get install -y python3-pip python3-venv git nodejs npm unzip curl
+sudo apt install python3-flask
+pip3 install joblib
+cd /tmp
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+cd -\end{lstlisting}
+
+\begin{lstlisting}[style=consola, language=bash, caption={salida terminal instancia base}]
+ubuntu@ip-10-0-10-133:/tmp$ sudo ./aws/install
+You can now run: /usr/local/bin/aws --version
+ubuntu@ip-10-0-10-133:/tmp$ cd -
+/home/ubuntu
+ubuntu@ip-10-0-10-133:~$ aws --version
+aws-cli/2.31.23 Python/3.13.7 Linux/6.14.0-1011-aws exe/x86_64.ubuntu.24
+ubuntu@ip-10-0-10-133:~$\end{lstlisting}
+
+
+Después instalar las dependencias cerramos la instancia y creamos la AMI a partir de la instancia anterior.
+
+
+\begin{figure}[H]
+\centerline{
+\includegraphics[width=\textwidth]{image copy 16.png}}
+\caption{Creación AMI}
+\end{figure}
+
+\newpage
+\subsection{Comprobación User Data}
+A partir de esta AMI podremos crear las instancias privadas y posteriormente descargar los archivos. Descargaremos los archivos de forma manual para comprobar los comandos del user data, así si nos da error, los solucionaremos antes de tener que volver a lanzar otra instancia. Para conectarnos nos bastará con conectarnos a una instancia intermedia, la cual llamamos bastión, a esta le pasaremos nuestra clave .pem mediante otra terminal usando: \\
+\fbox{scp -i ./v2.pem ./v2.pem ubuntu@ec2-23-20-27-162.compute-1.amazonaws.com:/home/ubuntu/.} Al hacer ls en nuestra terminal del bastión ya nos saldrá la clave y podremos conectarnos a nuestra instancia privada.
+
+\begin{lstlisting}[style=consola, language=bash, caption={salida terminal bastión}]
+ubuntu@ip-10-0-10-22:~$ ls
+v2.pem
+ubuntu@ip-10-0-10-22:~$\end{lstlisting}
+
+Ahora desde el bastión nos conectamos a la instancia privada y vamos probando las credenciales y comandos de descarga del user data. Después de probar bastantes veces me di cuenta que los comandos que se indican en la práctica para ingresar las claves de awscli, ingresaban las claves en \fbox{/home/ubuntu/.aws/credentials}, y no en \fbox{/root/.aws/credentials}, por lo que cambié las credenciales de lugar y sí que me funcionó la descarga del s3. Dejo a continuación la prueba que hice:
+
+\begin{lstlisting}[style=consola, language=bash, caption={salida terminal instancia privada}]
+ubuntu@ip-10-0-20-189:~/app$ sudo HOME=/home/ubuntu aws s3 cp s3://p4-buquet/backend/modelv1prod.py .
+fatal error: Unable to locate credentials
+ubuntu@ip-10-0-20-189:~/app$ cat /home/ubuntu/.aws/credentials
+cat: /home/ubuntu/.aws/credentials: No such file or directory
+ubuntu@ip-10-0-20-189:~/app$ sudo cat /root/.aws/credentials
+[default]
+aws_access_key_id = ASIA2HPTD7N2H2PSGE5C
+aws_secret_access_key = 2Qc1gPNpKoHJYZegKopCGZMQx3Xer9ehBS7KvNaf
+ubuntu@ip-10-0-20-189:~/app$ sudo cp /root/.aws/credentials /home/ubuntu/.aws/credentials
+cp: cannot create regular file '/home/ubuntu/.aws/credentials': No such file or directory
+ubuntu@ip-10-0-20-189:~/app$ sudo mkdir -p /home/ubuntu/.aws
+ubuntu@ip-10-0-20-189:~/app$ sudo cp /root/.aws/credentials /home/ubuntu/.aws/credentials
+ubuntu@ip-10-0-20-189:~/app$ sudo chown ubuntu:ubuntu /home/ubuntu/.aws/credentials
+ubuntu@ip-10-0-20-189:~/app$ sudo chmod 600 /home/ubuntu/.aws/credentials
+ubuntu@ip-10-0-20-189:~/app$ sudo HOME=/home/ubuntu aws s3 cp s3://p4-buquet/backend/modelv1prod.py .
+download: s3://p4-buquet/backend/modelv1prod.py to ./modelv1prod.py
+ubuntu@ip-10-0-20-189:~/app$ ls
+modelv1prod.py
+ubuntu@ip-10-0-20-189:~/app$\end{lstlisting}
+
+Después de comprobar lo que fallaba, simplemente introduje el traslado de las credenciales de lugar en el user data justo antes de las descargas del s3. Finalmente lancé una instancia para probar que todo iba bien con este user data actualizado. La prueba del user data salió como esperaba y ya podemos comenzar con el paso siguiente.
+\newpage
+\begin{lstlisting}[style=consola, language=bash, caption={logs instancia}]
+[   23.650346] cloud-init[915]: Completed 673 Bytes/673 Bytes (6.4 KiB/s) with 1 file(s) remaining
+download: s3://p4-buquet/backend/modelv1prod.py to ./modelv1prod.py
+[   24.701384] cloud-init[915]: Completed 896 Bytes/896 Bytes (7.7 KiB/s) with 1 file(s) remaining
+download: s3://p4-buquet/backend/modelv2canary.py to ./modelv2canary.py
+[   25.763120] cloud-init[915]: Completed 561 Bytes/561 Bytes (7.0 KiB/s) with 1 file(s) remaining
+download: s3://p4-buquet/backend/modelo.pkl to ./modelo.pkl
+[   25.949240] cloud-init[915]: total 12K
+[   25.949367] cloud-init[915]: -rw-r--r-- 1 ubuntu ubuntu 561 Oct 28 12:15 modelo.pkl
+[   25.949582] cloud-init[915]: -rw-r--r-- 1 ubuntu ubuntu 673 Oct 28 12:15 modelv1prod.py
+[   25.949784] cloud-init[915]: -rw-r--r-- 1 ubuntu ubuntu 896 Oct 28 12:15 modelv2canary.py\end{lstlisting}
+
+Los endpoinds también se están ejecutando adecuadamente
+\begin{lstlisting}[style=consola, language=bash, caption={consola endpoints}]
+ubuntu@ip-10-0-20-16:~$ curl -X POST http://127.0.0.1:8000/api/v1/recommendation -H "Content-Type: application/json" -d '{"user_id": "test"}'
+{"event_log":"User test purchase processed.","latency_ms":0,"model_id":"V1 - Stable","recommendation":["itemX_oldmodel","itemY_oldmodel"]}
+ubuntu@ip-10-0-20-16:~$\end{lstlisting}
+
+\section{Configuración del Balanceador de Carga (ALB)}
+
+\subsection{Target grups}
+
+Para esta parte debemos de tener corriendo 3 instancias con la versión de python\_v\_1 y 1 instancia con la versión de python\_v\_2. Esto lo haremos para crear los dos target groups, el de la V1 y el de la V2. Procederemos a crear 4 instancias privadas a partir de nuestra AMI y de nuestro user data, una vez las tengamos ejecutando nos conectamos una a una y vamos ejecutando el archivo python que corresponda a cada una, a las V1 \fbox{modelv1prod.py} y a la V2 \fbox{modelv2canary.py}, lo hacemos con 'nohup' para poder cerrar la terminal y que sigan funcionando en segundo plano. Debemos de tener estas instancias corriendo escuchando en el puerto correspondiente para poder configurar el ALB con estos target groups.
+
+\begin{figure}[H]
+\centerline{
+\includegraphics[width=0.85\textwidth]{image copy 17.png}}
+\caption{Instancias}
+\end{figure}
+
+
+Configuramos los dos targets al puerto 8000 con las instancias que hemos creado, de esta forma:
+
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.48\textwidth]{image copy 18.png}
+\hfill
+\includegraphics[width=0.48\textwidth]{image copy 19.png}
+\caption{TG-V1 y TG-V2}
+\end{figure}
+
+\subsection{ALB y pruebas}
+Cuando tengamos los grupos creamos la ALB de forma pública usando nuestra vpc de la práctica, el SG ALB y las subredes públicas. El listener lo ponemos en el puerto 80 como indica el enunciado y ajustamos los pesos de 90\% para V1 y 10\% para V2
+
+\begin{figure}[H]
+\centerline{
+\includegraphics[width=0.9\textwidth]{image copy 21.png}}
+\caption{ALB}
+\end{figure}
+
+Al tener el ALB corriendo podemos probar nuestros endpoinds desde el nombre de dns que nos proporciona AWS. Comprobamos como una de cada diez veces aproximadamente nos sale que se está usando el modelo V2.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{image copy 22.png}
+\caption{prueba V1}
+\end{figure}
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{image copy 23.png}
+\caption{prueba V2}
+\end{figure}
+
+\section{Transicion a contenedores}
+
+Para este apartado ejecutaremos nuestra aplicación canary dentro de un contenedor docker. Lanzamos una instancia, esta vez puede ser sin la AMI ya que debemos de instalar por nuestra cuenta el docker únicamente. Instalaremos el docker, descargaremos nuestro modelv2canary.py desde el s3, o para mayor control, y así darnos cuenta de que proviene de la version con docker, podemos copiar y pegar una version del .py modificada que contenga el nombre de modelo como V2-docker. Cuando tengamos el archivo .py dentro de la instancia crearemos un dockerfile que copiara el archivo .py en el contenedor y lo ejecutará. Finalmente construiremos la imagen a partir del dockerfile y la lanzaremos mapeando el puerto 80 de la instancia con el puerto 8000 del contenedor.
+
+\begin{lstlisting}[style=consola, language=bash, caption={Consola isntancia docker}]
+ubuntu@ip-10-0-20-71:~$ nano modelv2canary.py
+(copypaste)
+ubuntu@ip-10-0-20-71:~$ nano Ddockerfile
+FROM python:3.10-slim
+WORKDIR /app
+COPY modelv2canary.py .
+RUN pip install flask
+EXPOSE 8000
+CMD ["python", "modelv2canary.py"]
+ubuntu@ip-10-0-20-71:~$ sudo docker build -t modelv2canaryimage .
+...
+...
+Successfully built 5865039f3e08
+Successfully tagged modelv2canaryimage:latest
+ubuntu@ip-10-0-20-71:~$ sudo docker run -d -p 80:8000 modelv2canaryimage
+02af51a5fb4c5d18145061323f93872ed9311caa210b0e1d2db38dc9e0158140
+ubuntu@ip-10-0-20-71:~$ sudo docker ps
+CONTAINER ID   IMAGE                COMMAND                  CREATED          STATUS          PORTS                                     NAMES
+02af51a5fb4c   modelv2canaryimage   "python modelv2canar…"   55 seconds ago   Up 54 seconds   0.0.0.0:80->8000/tcp, [::]:80->8000/tcp   gifted_chatterjee
+ubuntu@ip-10-0-20-71:~$
+\end{lstlisting}
+
+\subsection{Nueva regla SG Backend}
+
+\noindent
+\begin{minipage}[c]{0.58\textwidth}
+Como estamos conectando el puerto 80 en vez de el 8000, debemos de cambiar la configuración del SG Backend para que permita la entrada del puerto 80 desde el SG ALB. También al crear el target group seleccionamos el puerto 80 en vez del 8000 y conectamos la instancia docker.
+\end{minipage}%
+\hfill
+\begin{minipage}[c]{0.38\textwidth}
+	\centering
+	\includegraphics[width=\textwidth]{image copy 24.png}
+	\captionof{figure}{TG V2 docker}
+\end{minipage}
+
+\newpage
+
+\subsection{Editar listener}
+Cuando tengamos el TG editamos el listener añadiendo otro grupo. No se si debía incluir TG V2 docker nuevo o sustituirlo por el anterior TG V2, pero optaré por incluir el nuevo TG de forma que tengamos el 80\% de trafico para V1, el 10\% para V2 normal y el ultimo 10\% para el V2 con docker. Al incluirlo lo probamos con el postman.
+
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{image copy 25.png}
+\caption{ALB final}
+\end{figure}
+
+\subsection{Pruebas endpoint del ALB}
+Y como podemos observar en la última captura, nos redirige de forma correcta al endpoint del contenedor.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{image copy 26.png}
+\caption{post docker}
+\end{figure}
+\newpage
+
+\section{Preguntas de reflexión}
+
+\subsection{Seguridad y NACLs}
+Aunque el SG-BACKEND ya filtra el tráfico no deseado al puerto 8000, la NACL añade una capa adicional de defensa a nivel de red (network layer) para todos los recursos de la subred, independiente de los SG de cada instancia. Así, mitiga riesgos ante errores en configuración de SGs y protege ante tráfico malicioso de otras fuentes dentro de la VPC. Un atacante no podría interceptar la respuesta de la API usando solo la NACL, ya que una NACL únicamente permite o deniega paquetes; no tienen capacidad de leer, modificar ni reenviar tráfico como lo haría un proxy. La confidencialidad y protección de datos requieren cifrado (HTTPS) además del filtrado de red.
+
+\subsection{WAF vs. NACL}
+Un ataque de Inyección de Código SQL sería detenido por el WAF (Web Application Firewall) y no por la NACL. El motivo es que el WAF inspecciona y filtra el contenido de las cargas útiles HTTP, detectando patrones peligrosos en la capa de aplicación. En cambio, la NACL solo filtra por IP, puerto y protocolo, sin analizar el contenido, por lo que nunca detectaría ataques específicos de aplicaciones.
+
+\subsection{VPC Endpoints}
+El VPC Endpoint permite que el tráfico de logging del Modelo V2 (por ejemplo, guardar logs en S3) viaje directamente entre la VPC y el servicio de AWS sin atravesar el Internet Gateway (IGW). Esto significa que los datos nunca salen a Internet, manteniendo toda la transferencia dentro de la red privada de AWS y, por tanto, aumentando la seguridad y reduciendo la latencia.
+
+\subsection{Redes de Contenedores}
+El Balanceador de Carga debe dirigir el tráfico a la IP privada de la VM Host Docker y al puerto 80 (el puerto mapeado externamente). Docker se encarga de reenviar ese tráfico interno al puerto 8000 del proceso Flask en el contenedor. El componente concreto de red de Docker responsable de esta traducción de puertos se llama Docker bridge network + Port Mapping (NAT); es decir, Docker redirige automáticamente las peticiones del puerto publicado en el host al puerto interno del contenedor.
+
+\subsection{Rollback Rápido}
+En un canary deployment, el empleo de contenedores Docker permite una reversión a la versión V1 mucho más rápida y segura que si el V2 estuviera en una VM tradicional. Con Docker, basta detener y eliminar el contenedor V2 para cortar completamente el tráfico nuevo, sin eliminar la VM ni reconfigurar el sistema operativo. Esto reduce a segundos el tiempo de rollback y minimiza los riesgos de “código residual”, facilitando además automatización y consistencia en los cambios.
+
+\end{document}
+
+

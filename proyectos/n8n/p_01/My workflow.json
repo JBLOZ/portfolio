@@ -1,0 +1,564 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        2224,
+        -144
+      ],
+      "id": "56fc0573-7162-4130-aedb-f4799571697f",
+      "name": "Telegram Trigger",
+      "webhookId": "2a894df2-0ae4-4f2d-a813-4d923ffe38b9",
+      "credentials": {
+        "telegramApi": {
+          "id": "aU3NC2kgL1ADR4xA",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Incrementa el contador de reintentos y copia datos originales\nconst currentRetry = $input.first().json.retry_count || 0;\nconst newRetry = currentRetry + 1;\n\nreturn {\n  json: {\n    retry_count: newRetry,\n    text: $('Code in JavaScript').first().json.text,\n    noticias: $('Code in JavaScript1').first().json.noticias\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4416,
+        -272
+      ],
+      "id": "97c88d73-d4b6-4022-9ed2-1d4e04e2fd2d",
+      "name": "Code Increment Retry",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "max-retry-check",
+              "leftValue": "={{ $json.retry_count }}",
+              "rightValue": 3,
+              "operator": {
+                "type": "number",
+                "operation": "smaller"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4688,
+        -272
+      ],
+      "id": "aab3b321-1cb5-43c3-b137-0b7d8114a780",
+      "name": "If Max Retry",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        4928,
+        -256
+      ],
+      "id": "0ea3d13d-f59f-49c4-b4ec-55a0645a0d78",
+      "name": "Error: Max Retries Reached",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.perplexity.ai/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_PERPLEXITY_API_KEY_HERE"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": [\n    \"Last news about {{ $json.text }}\",\n    \"{{ $json.text }} financial asset forecasts\",\n    \"{{ $json.text }} financial asset last results\"\n  ],\n  \"max_results\": 8\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3120,
+        -128
+      ],
+      "id": "8bd5af89-1700-4960-8bc6-68b03c7b54a3",
+      "name": "HTTP Request",
+      "alwaysOutputData": false,
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f530920e-a381-4983-9f85-0327b67690b0",
+              "leftValue": "={{ $json.message.text }} ",
+              "rightValue": "/analysis",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        2672,
+        -128
+      ],
+      "id": "5b0d799e-b33e-490e-8fe9-599d6d5fb491",
+      "name": "Filter",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const fullText = $input.item.json.message.text;\nconst ID = $input.item.json.message.from.id;\nconst command = \"/analysis \";\n\n// Extrae todo lo que viene después de /analysis\nconst textAfterCommand = fullText.includes(command) \n  ? fullText.substring(fullText.indexOf(command) + command.length).trim()\n  : fullText;\n\nreturn {\n  json: {\n    text: textAfterCommand,\n    id: ID\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2896,
+        -128
+      ],
+      "id": "0877a6ba-4ddf-4a7f-871d-37d885337660",
+      "name": "Code in JavaScript",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Imagina que la salida de la API viene en $json.results como array\nconst text = $('Code in JavaScript').first().json.text; // Nombre activo, por ejemplo \"sp500\"\nconst results = $input.first().json.results; // Array de noticias [{title, url, summary, ...}]\n\n// Convierte el array en texto plano concatenando los títulos y resúmenes\nconst noticiasTexto = results.map(noticia => {\n  // Cambia 'title', 'summary' por los keys reales del json de la API\n  return (\n    `Título: ${noticia.title}\\n` +\n    `Resumen: ${noticia.snippet || \"\"}\\n` +\n    `Link: ${noticia.url}\\n`\n  );\n}).join('\\n----------------------\\n');\n\n// 2. Crea el objeto con retry_count inicial y los resultados del paso anterior\nreturn {\n  retry_count: 0,\n  text: text,\n  noticias: noticiasTexto // string cruda procesada\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3296,
+        -128
+      ],
+      "id": "1feaa876-4578-4519-9bc0-7b4b40960e19",
+      "name": "Code in JavaScript1",
+      "executeOnce": false,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Contexto de noticias sobre {{ $('Code in JavaScript').first().json.text }}:\n{{ $('Code in JavaScript1').first().json.noticias }}\n\n---\nTAREA OBLIGATORIA:\nAnaliza el contexto de noticias anterior sobre {{ $('Code in JavaScript').first().json.text }}.\nResponde ÚNICAMENTE con el siguiente formato exacto, sin saludos ni explicaciones adicionales:\n\nCompra: [X]%\nMantener: [Y]%\nVender: [Z]%\nExpectativa: [Escribe 'Alcista' o 'Bajista']\nResumen: [Escribe aquí un resumen de un párrafo de las noticias que justifican el análisis]",
+        "options": {
+          "systemMessage": "Eres un analista financiero experto que basa sus análisis en la información que te proporcionan, responderás siempre en Español de España. En texto plano, como se indique en el prompt, sin usar en ningún caso markdown."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        3680,
+        -64
+      ],
+      "id": "3761e0a5-08c8-4cf6-9c35-03ef72f41b7e",
+      "name": "AI Agent",
+      "executeOnce": false,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "model": "alibaba/tongyi-deepresearch-30b-a3b:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        3648,
+        128
+      ],
+      "id": "8765f3c4-6476-4be7-ac39-0e23b480f34d",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "E1uIcVqyDOcvIHu2",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Obtiene la respuesta de texto del AI Agent\nconst aiResponse = $node['AI Agent'].json.output\n\n// 2. Comprobamos que 'aiResponse' sea un texto (string)\nif (typeof aiResponse !== 'string') {\n  throw new Error(\"La respuesta de la IA no es un texto (string). Es: \" + JSON.stringify(aiResponse));\n}\n\n// 3. Obtiene el nombre del activo de tu PRIMER nodo JS\nconst assetName = $('Code in JavaScript').first().json.text;\n\n// 4. Usa Expresiones Regulares (regex) para encontrar TODO\nconst buyMatch = aiResponse.match(/Compra: (\\d+)%/);\nconst holdMatch = aiResponse.match(/Mantener: (\\d+)%/);\nconst sellMatch = aiResponse.match(/Vender: (\\d+)%/);\nconst expMatch = aiResponse.match(/Expectativa: (Alcista|Bajista)/);\n// Usamos el flag 's' (dotAll) para que . capture también los saltos de línea del resumen\nconst sumMatch = aiResponse.match(/Resumen: (.*)/s); \n\n// 5. Extrae los valores\nconst buy = buyMatch ? buyMatch[1] : 'N/A';\nconst hold = holdMatch ? holdMatch[1] : 'N/A';\nconst sell = sellMatch ? sellMatch[1] : 'N/A';\nconst expectativa = expMatch ? expMatch[1] : 'N/D';\n// .trim() limpia espacios en blanco al inicio/final del resumen\nconst resumen = sumMatch ? sumMatch[1].trim() : 'No se pudo generar el resumen.'; \n\n// 6. Añadir un emoji a la expectativa\nlet expEmoji = '';\nif (expectativa === 'Alcista') {\n  expEmoji = '📈';\n} else if (expectativa === 'Bajista') {\n  expEmoji = '📉';\n}\n\n// 7. Crea el mensaje final para Telegram (CON HTML)\nconst responseText = `\n<b>📊 Análisis de ${assetName} 📊</b>\n\n• <b>Compra:</b> ${buy}%\n• <b>Mantener:</b> ${hold}%\n• <b>Venta:</b> ${sell}%\n• <b>Expectativa:</b> ${expectativa} ${expEmoji}\n\n<b>Resumen del Análisis:</b>\n${resumen}\n`;\n\n// 8. Devuelve el texto listo para enviar\nreturn { responseText: responseText };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4672,
+        -80
+      ],
+      "id": "49bb7e7b-0804-42d2-be36-d80611a026cf",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $node[\"Telegram Trigger\"].json.message.chat.id }}",
+        "text": "={{ $json.responseText }}",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        4928,
+        -80
+      ],
+      "id": "e02c8d9c-9586-43d3-a735-84008f9be187",
+      "name": "Send a text message",
+      "webhookId": "f5139b71-3712-4daa-9eee-b12b74787701",
+      "credentials": {
+        "telegramApi": {
+          "id": "aU3NC2kgL1ADR4xA",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=TAREA: Eres un revisor estricto. Tu trabajo es juzgar si el 'Análisis' se basa 100% en las 'Noticias'.\n\nNOTICIAS:\n{{ $node[\"Code in JavaScript1\"].json.noticias }}\n\nANÁLISIS A REVISAR:\n{{ $node[\"AI Agent\"].json.output }}\n\nINSTRUCCIONES:\n1. Compara el 'ANÁLISIS A REVISAR' con las 'NOTICIAS' y puntua la similitud de la informacion importante del 1 al 10.\n2. Responde ÚNICAMENTE con el formato JSON requerido.\n3. Si la puntuacion del analisis es 5 o más , devuelve unicamente \"True\".\n4. Si la puntuacion del analisis es menor de 5, devuelveme unicamente \"False\".",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        4048,
+        -64
+      ],
+      "id": "a4608df9-b945-4e18-9d17-80e31eba8666",
+      "name": "AI Agent1",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        4048,
+        160
+      ],
+      "id": "30c5b094-d1ff-4104-8186-d1992e68d9dc",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "E1uIcVqyDOcvIHu2",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "81440ccc-3948-466e-a9ae-3c9fcd897c69",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "True",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "a94453a9-d571-4353-a84c-b79ab07da5ea",
+              "leftValue": "={{ $('AI Agent').item.json.output }}",
+              "rightValue": "Compra:",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "080d8685-48a8-4a2a-9fbe-6d80e6f7da4c",
+              "leftValue": "={{ $('AI Agent').item.json.output }}",
+              "rightValue": "Mantener:",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "ec6424df-0bea-4465-827b-ce386427792d",
+              "leftValue": "={{ $('AI Agent').item.json.output }}",
+              "rightValue": "Vender:",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "1b282666-3283-439b-8d94-0091568a567e",
+              "leftValue": "={{ $('AI Agent').item.json.output }}",
+              "rightValue": "Expectativa:",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "cbba9733-e2ee-4dce-976c-a8c6d4f57618",
+              "leftValue": "={{ $('AI Agent').item.json.output }}",
+              "rightValue": "Resumen:",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        4416,
+        -64
+      ],
+      "id": "7ad03e89-cb06-49d4-8597-405739572bf5",
+      "name": "If",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"message\": \"/analysis nasdaq100\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2336,
+        192
+      ],
+      "id": "5b9d4304-f558-4bfe-ae32-064b7ef1aeb9",
+      "name": "Edit Fields",
+      "alwaysOutputData": false
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code Increment Retry": {
+      "main": [
+        [
+          {
+            "node": "If Max Retry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Max Retry": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error: Max Retries Reached",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code Increment Retry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5614a924-f1e0-4f5f-a72a-8d092f8d85ba",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "532a071c4b08e1e150ac01dcdd264be6aa65cdaaafc8d429d0cc129f7d2420bd"
+  },
+  "id": "zRsaYqczx6Y2TYQP",
+  "tags": []
+}

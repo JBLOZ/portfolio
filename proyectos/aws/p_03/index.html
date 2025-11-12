@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Análisis de Sentimientos IA</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+            
+            .container {
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                border-radius: 20px;
+                padding: 40px;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+                max-width: 600px;
+                width: 100%;
+                text-align: center;
+            }
+            
+            h1 {
+                color: #2c3e50;
+                margin-bottom: 10px;
+                font-size: 2.5em;
+                font-weight: 700;
+            }
+            
+            .subtitle {
+                color: #7f8c8d;
+                margin-bottom: 30px;
+                font-size: 1.1em;
+                line-height: 1.6;
+            }
+            
+            .input-container {
+                margin-bottom: 30px;
+            }
+            
+            textarea {
+                width: 100%;
+                padding: 15px;
+                border: 2px solid #e0e6ed;
+                border-radius: 12px;
+                font-size: 16px;
+                resize: vertical;
+                min-height: 120px;
+                transition: all 0.3s ease;
+                font-family: inherit;
+            }
+            
+            textarea:focus {
+                outline: none;
+                border-color: #667eea;
+                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            }
+            
+            .button-container {
+                margin-bottom: 30px;
+            }
+            
+            button {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border: none;
+                padding: 15px 40px;
+                border-radius: 25px;
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            }
+            
+            button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+            }
+            
+            button:active {
+                transform: translateY(0);
+            }
+            
+            button:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none;
+            }
+            
+            .result-container {
+                background: #f8f9fa;
+                border-radius: 12px;
+                padding: 20px;
+                margin-top: 20px;
+                border-left: 4px solid #667eea;
+            }
+            
+            .result-title {
+                color: #2c3e50;
+                font-size: 1.2em;
+                font-weight: 600;
+                margin-bottom: 10px;
+            }
+            
+            #result {
+                font-size: 1.1em;
+                line-height: 1.6;
+                color: #34495e;
+                min-height: 24px;
+            }
+            
+            .sentiment-positive {
+                color: #27ae60;
+                font-weight: 600;
+            }
+            
+            .sentiment-negative {
+                color: #e74c3c;
+                font-weight: 600;
+            }
+            
+            .loading {
+                color: #f39c12;
+                font-style: italic;
+            }
+            
+            .error {
+                color: #e74c3c;
+                font-weight: 500;
+            }
+            
+            .emoji {
+                font-size: 1.5em;
+                margin-right: 10px;
+            }
+            
+            @media (max-width: 768px) {
+                .container {
+                    padding: 30px 20px;
+                }
+                
+                h1 {
+                    font-size: 2em;
+                }
+                
+                textarea {
+                    min-height: 100px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🤖 Análisis de Sentimientos</h1>
+            <p class="subtitle">
+                Descubre el sentimiento detrás de tus palabras con nuestro modelo de IA avanzado.
+                Escribe una frase y sabremos si expresa sentimientos positivos o negativos.
+            </p>
+            
+            <div class="input-container">
+                <textarea 
+                    id="textInput" 
+                    placeholder="Escribe aquí tu frase... Por ejemplo: 'Me encanta este día tan hermoso' o 'Qué día más horrible'"
+                    maxlength="500"
+                ></textarea>
+            </div>
+            
+            <div class="button-container">
+                <button onclick="predict()" id="predictBtn">
+                    ✨ Analizar Sentimiento
+                </button>
+            </div>
+            
+            <div class="result-container">
+                <div class="result-title">Resultado del Análisis:</div>
+                <div id="result">Escribe una frase arriba y haz clic en "Analizar Sentimiento" para comenzar.</div>
+            </div>
+        </div>
+
+        <script>
+            async function predict() {
+                const textInput = document.getElementById('textInput');
+                const resultElement = document.getElementById('result');
+                const predictBtn = document.getElementById('predictBtn');
+                
+                const text = textInput.value.trim();
+                
+                if (!text) {
+                    resultElement.innerHTML = '<span class="error">⚠️ Por favor, escribe una frase para analizar.</span>';
+                    return;
+                }
+                
+                // Deshabilitar botón y mostrar estado de carga
+                predictBtn.disabled = true;
+                predictBtn.textContent = 'Analizando...';
+                resultElement.innerHTML = '<span class="loading">🔄 Analizando el sentimiento de tu frase...</span>';
+                
+                try {
+                    const response = await fetch('/api/predict', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text: text })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        resultElement.innerHTML = `<span class="error">❌ Error: ${data.error}</span>`;
+                    } else {
+                        // Interpretar el resultado del análisis de sentimientos
+                        const sentiment = data.sentiment;
+                        let resultText = '';
+                        let className = '';
+                        
+                        if (sentiment === 1 || sentiment === 'positive') {
+                            resultText = '<span class="emoji">😊</span>¡Sentimiento <span class="sentiment-positive">POSITIVO</span>! Tu frase expresa emociones agradables y optimistas.';
+                        } else if (sentiment === 0 || sentiment === 'negative') {
+                            resultText = '<span class="emoji">😔</span>Sentimiento <span class="sentiment-negative">NEGATIVO</span>. Tu frase expresa emociones menos favorables.';
+                        } else {
+                            resultText = `<span class="emoji">🤔</span>Resultado: ${sentiment}`;
+                        }
+                        
+                        resultElement.innerHTML = resultText;
+                    }
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    resultElement.innerHTML = '<span class="error">❌ Error al conectar con el servicio de análisis. Por favor, inténtalo de nuevo.</span>';
+                } finally {
+                    // Rehabilitar botón
+                    predictBtn.disabled = false;
+                    predictBtn.textContent = '✨ Analizar Sentimiento';
+                }
+            }
+            
+            // Permitir envío con Enter (Ctrl+Enter en textarea)
+            document.getElementById('textInput').addEventListener('keydown', function(event) {
+                if (event.ctrlKey && event.key === 'Enter') {
+                    predict();
+                }
+            });
+        </script>
+    </body>
+</html>

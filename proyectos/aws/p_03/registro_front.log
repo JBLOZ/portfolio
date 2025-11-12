@@ -1,0 +1,220 @@
+[2J[01;01H[=3h[2J[01;01H[2J[01;01H[=3h[2J[01;01H[2J[01;01H[=3h[2J[01;01H[0m[35m[40m[2J[01;01H[=3h[2J[01;01H[0m[37m[40m  Booting `Amazon Linux (6.1.150-174.273.amzn2023.x86_64) 2023'
+
+
+[    0.035553] RETBleed: WARNING: Spectre v2 mitigation leaves CPU vulnerable to RETBleed attacks, data leaks possible!
+[    4.163885] systemd-journald[828]: Received client request to flush runtime journal.
+[    4.685468] RPC: Registered named UNIX socket transport module.
+[    4.686035] RPC: Registered udp transport module.
+[    4.686470] RPC: Registered tcp transport module.
+[    4.686899] RPC: Registered tcp NFSv4.1 backchannel transport module.
+[    4.758029] input: Power Button as /devices/LNXSYSTM:00/LNXPWRBN:00/input/input0
+[    4.765894] ena 0000:00:05.0: Elastic Network Adapter (ENA) v2.14.1g
+[    4.773109] ena 0000:00:05.0: ENA device version: 0.10
+[    4.773601] ena 0000:00:05.0: ENA controller version: 0.0.1 implementation version 1
+[    4.799858] i8042: PNP: PS/2 Controller [PNP0303:KBD,PNP0f13:MOU] at 0x60,0x64 irq 1,12
+[    4.801421] i8042: Warning: Keylock active
+[    4.801927] ACPI: button: Power Button [PWRF]
+[    4.802749] input: Sleep Button as /devices/LNXSYSTM:00/LNXSLPBN:00/input/input1
+[    4.804909] serio: i8042 KBD port at 0x60,0x64 irq 1
+[    4.805655] serio: i8042 AUX port at 0x60,0x64 irq 12
+[    4.806991] ACPI: button: Sleep Button [SLPF]
+[    4.868540] ena 0000:00:05.0: LLQ is not supported Fallback to host mode policy.
+[    4.882821] ena 0000:00:05.0: Elastic Network Adapter (ENA) found at mem 80400000, mac addr 0e:12:66:a7:cf:51
+[    4.973165] ena 0000:00:05.0 ens5: renamed from eth0
+[    5.121568] zram_generator::config[1367]: zram0: system has too much memory (904MB), limit is 800MB, ignoring.
+[    6.165011] ena 0000:00:05.0 ens5: Local page cache is disabled for less than 16 channels
+[    8.028213] cloud-init[1535]: Cloud-init v. 22.2.2 running 'init' at Tue, 30 Sep 2025 17:38:21 +0000. Up 8.00 seconds.
+[    8.106564] cloud-init[1535]: ci-info: ++++++++++++++++++++++++++++++++++++++Net device info+++++++++++++++++++++++++++++++++++++++
+[    8.109212] cloud-init[1535]: ci-info: +--------+------+-----------------------------+---------------+--------+-------------------+
+[    8.111556] cloud-init[1535]: ci-info: | Device |  Up  |           Address           |      Mask     | Scope  |     Hw-Address    |
+[    8.114237] cloud-init[1535]: ci-info: +--------+------+-----------------------------+---------------+--------+-------------------+
+[    8.116717] cloud-init[1535]: ci-info: |  ens5  | True |         10.0.12.210         | 255.255.240.0 | global | 0e:12:66:a7:cf:51 |
+[    8.119256] cloud-init[1535]: ci-info: |  ens5  | True | fe80::c12:66ff:fea7:cf51/64 |       .       |  link  | 0e:12:66:a7:cf:51 |
+[    8.121722] cloud-init[1535]: ci-info: |   lo   | True |          127.0.0.1          |   255.0.0.0   |  host  |         .         |
+[    8.124625] cloud-init[1535]: ci-info: |   lo   | True |           ::1/128           |       .       |  host  |         .         |
+[    8.128016] cloud-init[1535]: ci-info: +--------+------+-----------------------------+---------------+--------+-------------------+
+[    8.130272] cloud-init[1535]: ci-info: ++++++++++++++++++++++++++++Route IPv4 info+++++++++++++++++++++++++++++
+[    8.132340] cloud-init[1535]: ci-info: +-------+-------------+----------+-----------------+-----------+-------+
+[    8.134282] cloud-init[1535]: ci-info: | Route | Destination | Gateway  |     Genmask     | Interface | Flags |
+[    8.136227] cloud-init[1535]: ci-info: +-------+-------------+----------+-----------------+-----------+-------+
+[    8.138285] cloud-init[1535]: ci-info: |   0   |   0.0.0.0   | 10.0.0.1 |     0.0.0.0     |    ens5   |   UG  |
+[    8.140422] cloud-init[1535]: ci-info: |   1   |   10.0.0.0  | 0.0.0.0  |  255.255.240.0  |    ens5   |   U   |
+[    8.142292] cloud-init[1535]: ci-info: |   2   |   10.0.0.1  | 0.0.0.0  | 255.255.255.255 |    ens5   |   UH  |
+[    8.144106] cloud-init[1535]: ci-info: |   3   |   10.0.0.2  | 0.0.0.0  | 255.255.255.255 |    ens5   |   UH  |
+[    8.145948] cloud-init[1535]: ci-info: +-------+-------------+----------+-----------------+-----------+-------+
+[    8.147839] cloud-init[1535]: ci-info: +++++++++++++++++++Route IPv6 info+++++++++++++++++++
+[    8.149615] cloud-init[1535]: ci-info: +-------+-------------+---------+-----------+-------+
+[    8.151241] cloud-init[1535]: ci-info: | Route | Destination | Gateway | Interface | Flags |
+[    8.153084] cloud-init[1535]: ci-info: +-------+-------------+---------+-----------+-------+
+[    8.154846] cloud-init[1535]: ci-info: |   0   |  fe80::/64  |    ::   |    ens5   |   U   |
+[    8.156569] cloud-init[1535]: ci-info: |   2   |    local    |    ::   |    ens5   |   U   |
+[    8.158283] cloud-init[1535]: ci-info: |   3   |  multicast  |    ::   |    ens5   |   U   |
+[    8.160053] cloud-init[1535]: ci-info: +-------+-------------+---------+-----------+-------+
+[    9.050831] cloud-init[1535]: Generating public/private ed25519 key pair.
+[    9.052297] cloud-init[1535]: Your identification has been saved in /etc/ssh/ssh_host_ed25519_key
+[    9.054084] cloud-init[1535]: Your public key has been saved in /etc/ssh/ssh_host_ed25519_key.pub
+[    9.056114] cloud-init[1535]: The key fingerprint is:
+[    9.057174] cloud-init[1535]: SHA256:UdOUSXIYCKHoHxaipj/ntexSynurb1VABDN+M2GF9lA root@ip-10-0-12-210.ec2.internal
+[    9.059092] cloud-init[1535]: The key's randomart image is:
+[    9.060265] cloud-init[1535]: +--[ED25519 256]--+
+[    9.061217] cloud-init[1535]: |      **==E*+o   |
+[    9.062144] cloud-init[1535]: |   . o +*o.++    |
+[    9.063076] cloud-init[1535]: |  o o ..=+       |
+[    9.064112] cloud-init[1535]: | o . . . +o      |
+[    9.065090] cloud-init[1535]: |... o   S.       |
+[    9.066001] cloud-init[1535]: |o  o .. .        |
+[    9.066937] cloud-init[1535]: |.  ..o..         |
+[    9.067937] cloud-init[1535]: | .. =oo.         |
+[    9.068853] cloud-init[1535]: |  .++O*.         |
+[    9.069779] cloud-init[1535]: +----[SHA256]-----+
+[    9.070757] cloud-init[1535]: Generating public/private ecdsa key pair.
+[    9.072219] cloud-init[1535]: Your identification has been saved in /etc/ssh/ssh_host_ecdsa_key
+[    9.073958] cloud-init[1535]: Your public key has been saved in /etc/ssh/ssh_host_ecdsa_key.pub
+[    9.075809] cloud-init[1535]: The key fingerprint is:
+[    9.076874] cloud-init[1535]: SHA256:DHoHyMbxCAadMxbvLKwmwRVAwdQaJVvQmYxDtu+7Qhk root@ip-10-0-12-210.ec2.internal
+[    9.078882] cloud-init[1535]: The key's randomart image is:
+[    9.080100] cloud-init[1535]: +---[ECDSA 256]---+
+[    9.081111] cloud-init[1535]: |*%&*+            |
+[    9.082111] cloud-init[1535]: |.*@@.=           |
+[    9.083131] cloud-init[1535]: | +++B +          |
+[    9.084275] cloud-init[1535]: |.Eo+ . +         |
+[    9.085295] cloud-init[1535]: |..=.+ . S        |
+[    9.086304] cloud-init[1535]: | =.. . .         |
+[    9.087287] cloud-init[1535]: |+. .             |
+[    9.088437] cloud-init[1535]: |o.  .            |
+[    9.089430] cloud-init[1535]: |  .o.            |
+[    9.090477] cloud-init[1535]: +----[SHA256]-----+
+[    9.646249] cloud-init[1623]: Cloud-init v. 22.2.2 running 'modules:config' at Tue, 30 Sep 2025 17:38:22 +0000. Up 9.55 seconds.
+[   10.354959] cloud-init[1633]: Cloud-init v. 22.2.2 running 'modules:final' at Tue, 30 Sep 2025 17:38:23 +0000. Up 10.30 seconds.
+<13>Sep 30 17:38:23 user-data: --- Iniciando script de User Data para el Front-End ---
+<13>Sep 30 17:38:23 user-data: Actualizando sistema e instalando Node.js...
+<13>Sep 30 17:38:25 user-data: Amazon Linux 2023 repository                     68 MB/s |  46 MB     00:00    
+
+
+Amazon Linux 2023.8.20250915
+Kernel 6.1.150-174.273.amzn2023.x86_64 on an x86_64 (-)
+
+ip-10-0-12-210 login: <13>Sep 30 17:38:36 user-data: Amazon Linux 2023 Kernel Livepatch repository   205 kB/s |  26 kB     00:00    
+<13>Sep 30 17:38:37 user-data: ================================================================================
+<13>Sep 30 17:38:37 user-data: WARNING:
+<13>Sep 30 17:38:37 user-data:   A newer release of "Amazon Linux" is available.
+<13>Sep 30 17:38:37 user-data: 
+<13>Sep 30 17:38:37 user-data:   Available Versions:
+<13>Sep 30 17:38:37 user-data: 
+<13>Sep 30 17:38:37 user-data:   Version 2023.9.20250929:
+<13>Sep 30 17:38:37 user-data:     Run the following command to upgrade to 2023.9.20250929:
+<13>Sep 30 17:38:37 user-data: 
+<13>Sep 30 17:38:37 user-data:       dnf upgrade --releasever=2023.9.20250929
+<13>Sep 30 17:38:37 user-data: 
+<13>Sep 30 17:38:37 user-data:     Release notes:
+<13>Sep 30 17:38:37 user-data:      https://docs.aws.amazon.com/linux/al2023/release-notes/relnotes-2023.9.20250929.html
+<13>Sep 30 17:38:37 user-data: 
+<13>Sep 30 17:38:37 user-data: ================================================================================
+<13>Sep 30 17:38:37 user-data: Dependencies resolved.
+<13>Sep 30 17:38:37 user-data: Nothing to do.
+<13>Sep 30 17:38:37 user-data: Complete!
+<13>Sep 30 17:38:37 user-data:   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+<13>Sep 30 17:38:37 user-data:                                  Dload  Upload   Total   Spent    Left  Speed
+<13>Sep 30 17:38:37 user-data: 
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+100 15037  100 15037    0     0   696k      0 --:--:-- --:--:-- --:--:--  734k
+<13>Sep 30 17:38:37 user-data: => Downloading nvm as script to '/root/.nvm'
+<13>Sep 30 17:38:37 user-data: 
+<13>Sep 30 17:38:37 user-data: => Profile not found. Tried ~/.bashrc, ~/.bash_profile, ~/.zshrc, and ~/.profile.
+<13>Sep 30 17:38:37 user-data: => Create one of them and run this script again
+<13>Sep 30 17:38:37 user-data:    OR
+<13>Sep 30 17:38:37 user-data: => Append the following lines to the correct file yourself:
+<13>Sep 30 17:38:37 user-data: 
+<13>Sep 30 17:38:37 user-data: export NVM_DIR="$HOME/root/.nvm"
+<13>Sep 30 17:38:37 user-data: [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+<13>Sep 30 17:38:37 user-data: 
+<13>Sep 30 17:38:37 user-data: => Close and reopen your terminal to start using nvm or run the following to use it now:
+<13>Sep 30 17:38:37 user-data: 
+<13>Sep 30 17:38:37 user-data: export NVM_DIR="$HOME/root/.nvm"
+<13>Sep 30 17:38:37 user-data: [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+<13>Sep 30 17:38:38 user-data: Downloading and installing node v18.20.8...
+<13>Sep 30 17:38:38 user-data: Downloading https://nodejs.org/dist/v18.20.8/node-v18.20.8-linux-x64.tar.xz...
+<13>Sep 30 17:38:38 user-data: 
+#########                                                                 12.6%
+############################                                              40.2%
+#########################################################                 80.4%
+######################################################################## 100.0%
+<13>Sep 30 17:38:38 user-data: Computing checksum with sha256sum
+<13>Sep 30 17:38:38 user-data: Checksums matched!
+<13>Sep 30 17:38:41 user-data: Now using node v18.20.8 (npm v10.8.2)
+<13>Sep 30 17:38:41 user-data: Creating default alias: default -> 18 (-> v18.20.8 *)
+<13>Sep 30 17:38:41 user-data: Node.js instalado.
+<13>Sep 30 17:38:41 user-data: Creando directorios de la aplicaciÃ³n en /app...
+<13>Sep 30 17:38:41 user-data: Directorio creado y nos hemos movido a /app.
+<13>Sep 30 17:38:41 user-data: Descargando archivos del front-end desde S3...
+<13>Sep 30 17:38:41 user-data: --2025-09-30 17:38:41--  https://baqueet-p3.s3.amazonaws.com/front-end/app_front.js
+<13>Sep 30 17:38:41 user-data: Resolving baqueet-p3.s3.amazonaws.com (baqueet-p3.s3.amazonaws.com)... 3.5.31.168, 54.231.161.81, 16.15.200.166, ...
+<13>Sep 30 17:38:41 user-data: Connecting to baqueet-p3.s3.amazonaws.com (baqueet-p3.s3.amazonaws.com)|3.5.31.168|:443... connected.
+<13>Sep 30 17:38:41 user-data: HTTP request sent, awaiting response... 200 OK
+<13>Sep 30 17:38:41 user-data: Length: 836 [application/javascript]
+<13>Sep 30 17:38:41 user-data: Saving to: âapp_front.jsâ
+<13>Sep 30 17:38:41 user-data: 
+<13>Sep 30 17:38:41 user-data:      0K                                                       100% 35.5M=0s
+<13>Sep 30 17:38:41 user-data: 
+<13>Sep 30 17:38:41 user-data: 2025-09-30 17:38:41 (35.5 MB/s) - âapp_front.jsâ saved [836/836]
+<13>Sep 30 17:38:41 user-data: 
+<13>Sep 30 17:38:41 user-data: --2025-09-30 17:38:41--  https://baqueet-p3.s3.amazonaws.com/front-end/index.html
+<13>Sep 30 17:38:42 user-data: Resolving baqueet-p3.s3.amazonaws.com (baqueet-p3.s3.amazonaws.com)... 54.231.227.177, 54.231.200.105, 52.217.114.153, ...
+<13>Sep 30 17:38:42 user-data: Connecting to baqueet-p3.s3.amazonaws.com (baqueet-p3.s3.amazonaws.com)|54.231.227.177|:443... connected.
+<13>Sep 30 17:38:42 user-data: HTTP request sent, awaiting response... 200 OK
+<13>Sep 30 17:38:42 user-data: Length: 1463 (1.4K) [text/html]
+<13>Sep 30 17:38:42 user-data: Saving to: â./public/index.htmlâ
+<13>Sep 30 17:38:42 user-data: 
+<13>Sep 30 17:38:42 user-data:      0K .                                                     100%  129M=0s
+<13>Sep 30 17:38:42 user-data: 
+<13>Sep 30 17:38:42 user-data: 2025-09-30 17:38:42 (129 MB/s) - â./public/index.htmlâ saved [1463/1463]
+<13>Sep 30 17:38:42 user-data: 
+<13>Sep 30 17:38:42 user-data: Archivos del front-end descargados.
+<13>Sep 30 17:38:42 user-data: Inicializando proyecto de Node.js y aÃ±adiendo dependencias...
+<13>Sep 30 17:38:42 user-data: Wrote to /app/package.json:
+<13>Sep 30 17:38:42 user-data: 
+<13>Sep 30 17:38:42 user-data: {
+<13>Sep 30 17:38:42 user-data:   "name": "app",
+<13>Sep 30 17:38:42 user-data:   "version": "1.0.0",
+<13>Sep 30 17:38:42 user-data:   "main": "app_front.js",
+<13>Sep 30 17:38:42 user-data:   "scripts": {
+<13>Sep 30 17:38:42 user-data:     "test": "echo \"Error: no test specified\" && exit 1"
+<13>Sep 30 17:38:42 user-data:   },
+<13>Sep 30 17:38:42 user-data:   "keywords": [],
+<13>Sep 30 17:38:42 user-data:   "author": "",
+<13>Sep 30 17:38:42 user-data:   "license": "ISC",
+<13>Sep 30 17:38:42 user-data:   "description": ""
+<13>Sep 30 17:38:42 user-data: }
+<13>Sep 30 17:38:42 user-data: 
+<13>Sep 30 17:38:42 user-data: 
+<13>Sep 30 17:38:42 user-data: 
+<13>Sep 30 17:38:47 user-data: 
+<13>Sep 30 17:38:47 user-data: added 79 packages, and audited 80 packages in 5s
+<13>Sep 30 17:38:47 user-data: 
+<13>Sep 30 17:38:47 user-data: 18 packages are looking for funding
+<13>Sep 30 17:38:47 user-data:   run `npm fund` for details
+<13>Sep 30 17:38:47 user-data: 
+<13>Sep 30 17:38:47 user-data: found 0 vulnerabilities
+<13>Sep 30 17:38:47 user-data: Dependencias (express, axios) instaladas localmente en node_modules.
+<13>Sep 30 17:38:47 user-data: Reemplazando la IP del backend por 10.0.137.88...
+<13>Sep 30 17:38:47 user-data: IP reemplazada.
+<13>Sep 30 17:38:47 user-data: Iniciando el servidor de Node.js...
+<13>Sep 30 17:38:47 user-data: --- Script de User Data del Front-End finalizado con Ã©xito. ---
+ci-info: +++++++++++++++++++++++++++Authorized keys from /home/ec2-user/.ssh/authorized_keys for user ec2-user++++++++++++++++++++++++++++
+ci-info: +---------+-------------------------------------------------------------------------------------------------+---------+---------+
+ci-info: | Keytype |                                       Fingerprint (sha256)                                      | Options | Comment |
+ci-info: +---------+-------------------------------------------------------------------------------------------------+---------+---------+
+ci-info: | ssh-rsa | 56:a6:a6:30:e1:88:bf:ec:5b:21:6e:59:fe:36:db:4c:b3:09:9d:30:cd:32:b8:63:46:28:c1:a3:2d:93:2f:28 |    -    |    pc   |
+ci-info: +---------+-------------------------------------------------------------------------------------------------+---------+---------+
+<14>Sep 30 17:38:47 cloud-init: #############################################################
+<14>Sep 30 17:38:47 cloud-init: -----BEGIN SSH HOST KEY FINGERPRINTS-----
+<14>Sep 30 17:38:47 cloud-init: 256 SHA256:DHoHyMbxCAadMxbvLKwmwRVAwdQaJVvQmYxDtu+7Qhk root@ip-10-0-12-210.ec2.internal (ECDSA)
+<14>Sep 30 17:38:47 cloud-init: 256 SHA256:UdOUSXIYCKHoHxaipj/ntexSynurb1VABDN+M2GF9lA root@ip-10-0-12-210.ec2.internal (ED25519)
+<14>Sep 30 17:38:47 cloud-init: -----END SSH HOST KEY FINGERPRINTS-----
+<14>Sep 30 17:38:47 cloud-init: #############################################################
+-----BEGIN SSH HOST KEY KEYS-----
+ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPTZEbHSHYZ5agXZXviU1DXFstaSIrg0uthCK7Em0pGjfTGqDpo4HZRrY+Briw+KczuuYicXvtsUlcnBcXLYPCQ= root@ip-10-0-12-210.ec2.internal
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOHDIHMKJh2sRZLJG5bxO1dOYiPf2C2ThnOUfyQzCrC3 root@ip-10-0-12-210.ec2.internal
+-----END SSH HOST KEY KEYS-----
+[   34.514450] cloud-init[1633]: Cloud-init v. 22.2.2 finished at Tue, 30 Sep 2025 17:38:47 +0000. Datasource DataSourceEc2.  Up 34.50 seconds
+<13>Sep 30 17:38:48 user-data: Servidor front-end escuchando en el puerto 80
