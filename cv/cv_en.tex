@@ -1,0 +1,213 @@
+%-------------------------
+% Resume in Latex
+% Author : Jake Gutierrez
+% Based off of: [https://github.com/sb2nov/resume](https://github.com/sb2nov/resume)
+% License : MIT
+%------------------------
+
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\usepackage{fontawesome5}
+\usepackage{multicol}
+\usepackage[most]{tcolorbox}
+\setlength{\multicolsep}{-3.0pt}
+\setlength{\columnsep}{-1pt}
+
+\pagestyle{fancy}
+\fancyhf{} % clear all header and footer fields
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Adjust margins
+\addtolength{\oddsidemargin}{-0.6in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1.19in}
+\addtolength{\topmargin}{-.7in}
+\addtolength{\textheight}{1.4in}
+
+\urlstyle{same}
+
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+\titleformat{\section}{
+  \vspace{-10pt}\scshape\raggedright\large\bfseries
+}{}{0em}{}[\color{black}\titlerule \vspace{-10pt}]
+
+%-------------------------
+% Custom commands
+\newcommand{\resumeItem}[1]{
+  \item\small{
+    {#1 \vspace{-2pt}}
+  }
+}
+
+\newcommand{\classesList}[4]{
+    \item\small{
+        {#1 #2 #3 #4 \vspace{-2pt}}
+  }
+}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-2pt}\item
+    \begin{tabular*}{1.0\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & \textbf{\small #2} \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubSubheading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      	extit{\small#1} & \textit{\small #2} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeProjectHeading}[2]{
+    \item
+    \begin{tabular*}{1.001\textwidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & \textbf{\small #2}\\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubItem}[1]{\resumeItem{#1}\vspace{-7pt}}
+
+\newcommand{\bluehref}[2]{\href{#1}{\textcolor{RoyalBlue}{#2}}}
+
+\renewcommand\labelitemi{$\vcenter{\hbox{\tiny$\bullet$}}$}
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.0in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-3pt}}
+
+\newenvironment{resumeSection}[1]{
+  \begin{tcolorbox}[
+    colback=white,
+    boxrule=0pt,
+    sharp corners,
+    enhanced,
+    breakable,
+    left=4pt,
+    right=4pt,
+    top=4pt,
+    bottom=4pt,
+    borderline west={0.6pt}{0pt}{black},
+    borderline east={0.6pt}{0pt}{black},
+    borderline north={0.6pt}{0pt}{black},
+    borderline south={0.6pt}{0pt}{black}
+  ]
+  {\scshape\large\bfseries #1}\par\vspace{1pt}
+}{
+  \end{tcolorbox}
+  \vspace{-2pt}
+}
+
+%-------------------------------------------
+%%%%%%  RESUME STARTS HERE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+\begin{center}
+    {\Huge \scshape Jordi Blasco Lozano} \\ \vspace{1pt}
+    Alicante, Espa\~na \\ \vspace{1pt}
+    \small \raisebox{-0.1\height}\faPhone\ +34\,622\,47\,05\,35 ~
+    \href{mailto:jordiblloz@gmail.com}{\raisebox{-0.2\height}\faEnvelope\ \underline{jordiblloz@gmail.com}} ~
+    \href{https://linkedin.com/in/jbloz}{\raisebox{-0.2\height}\faLinkedin\ \underline{linkedin.com/in/jbloz}} ~
+    \href{https://github.com/JBLOZ}{\raisebox{-0.2\height}\faGithub\ \underline{github.com/JBLOZ}}
+\end{center}
+
+\vspace{4pt}
+{\scshape\large\bfseries Profile}\par
+\vspace{2pt}
+\small I am an Artificial Intelligence Engineering 3rd year student seeking opportunities to apply and expand my knowledge in AI, particularly in projects related to Python, algorithms, and application development. I have a strong background in artificial intelligence, programming, and algorithms, along with hands-on experience in video game development and international collaboration.
+\vspace{6pt}
+
+%-----------INTERNATIONAL MOBILITY-----------
+\begin{resumeSection}{International Mobility and Key Projects}
+  \resumeSubHeadingListStart
+    \resumeProjectHeading
+      {\textbf{Erasmus Home Human Out Migration in Europe} $|$ \emph{Budapest, Hungary}}{Sept. 2021}
+      \resumeItemListStart
+        \resumeItem{Collaborated with international partners on the Erasmus \bluehref{https://erasmus-plus.ec.europa.eu/projects/search/details/2020-1-FR01-KA229-079855}{HOME} initiative addressing human out migration in Europe.}
+      \resumeItemListEnd
+    \resumeProjectHeading
+      {\textbf{University Projects} $|$ \emph{Alicante, Spain}}{2023 -- Present}
+      \resumeItemListStart
+  \resumeItem{Implemented a \bluehref{https://github.com/JBLOZ/ROBOT-fuzzy-and-basiclogic}{fuzzy system} in Python using \texttt{fuzzy\_expert} to control a 2D robot for line following.}
+  \resumeItem{Developed and documented a \bluehref{https://github.com/JBLOZ/CNN-classification----geometric2d-and-cancer-dangerousness}{ResNet-50 model} in MATLAB for skin cancer detection, reaching 80\% accuracy for cancerous and 85\% for non-cancerous classifications.}
+  \resumeItem{Built an \bluehref{https://github.com/JBLOZ/py-ecommerce-software-proyect}{intelligent e-commerce web application} enabling product search by text or image through pre-trained AI models.}
+  \resumeItem{Created a \bluehref{https://github.com/JBLOZ/heart-attack-fuzzy-system}{fuzzy expert system} to estimate heart attack risk based on structured clinical questions.}
+  \resumeItem{Designed a \bluehref{https://github.com/JBLOZ/PACMAN-CNN-Alphabeta}{Pacman agent} that combines a CNN with Alpha-Beta heuristics for strategic gameplay.}
+  \resumeItem{Developed and evaluated a multi-class animal classification system, benchmarking classifiers like Gaussian Bayes, Parzen windows, and k-NN variants on a \bluehref{https://jbloz.github.io/portfolio/proyectos/aprendizaje_automatico/p_02/memoria.pdf}{balanced Zoo dataset with 7 species}.}
+  \resumeItem{Designed and implemented a \bluehref{https://jbloz.github.io/portfolio/proyectos/aws/p_03/memoria_03.pdf}{secure hybrid AWS deployment}, covering VPC segmentation, S3 policy hardening, and automated EC2 front/back provisioning, alongside an \bluehref{https://jbloz.github.io/portfolio/proyectos/aws/p_04/memoria_04.pdf}{advanced canary rollout} that scales recommendation APIs across subnets, ALB target groups, and container-based updates.}
+  \resumeItem{For additional case studies, explore my \bluehref{https://jbloz.github.io/portfolio/proyectos/portfolio/index.html}{project portfolio}.}
+      \resumeItemListEnd
+  \resumeSubHeadingListEnd
+\end{resumeSection}
+
+%-----------INDI PROJECTS-----------
+\begin{resumeSection}{Indi Projects}
+  \resumeSubHeadingListStart
+    \resumeProjectHeading
+      {\textbf{Spotify Wrapped Analytics} $|$ \emph{Alicante, Spain}}{Oct. 2024 -- 2025}
+      \resumeItemListStart
+  \resumeItem{Developed a Jupyter notebook delivering in-depth analytics of \bluehref{https://github.com/JBLOZ/Spotify_Stats}{music listening habits} using Spotify data.}
+      \resumeItemListEnd
+    \resumeProjectHeading
+      {\textbf{3D Video Game with Unreal Engine 4} $|$ \emph{Alicante, Spain}}{2022}
+      \resumeItemListStart
+  \resumeItem{Assembled and programmed a \bluehref{https://www.youtube.com/watch?v=VaXI3NCUENQ}{3D video game} leveraging Unreal Engine Blueprints and C++.}
+      \resumeItemListEnd
+  \resumeSubHeadingListEnd
+\end{resumeSection}
+
+%-----------PROFESSIONAL EXPERIENCE-----------
+\begin{resumeSection}{Professional Experience}
+  \resumeSubHeadingListStart
+    \resumeProjectHeading
+      {\textbf{Outlier} $|$ \emph{Alicante, Spain}}{2024 -- Present}
+      \resumeItemListStart
+        \resumeItem{Working as a Reinforcement Learning from Human Feedback Researcher contributing to multiple reinforcement learning projects driven by human feedback.}
+      \resumeItemListEnd
+  \resumeSubHeadingListEnd
+\end{resumeSection}
+
+%-----------EDUCATION-----------
+\begin{resumeSection}{Education}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {University of Alicante}{Sept. 2022 -- Present}
+      {Artificial Intelligence Engineering (3rd year, 100\% pass)}{Alicante, Spain}
+    \resumeSubheading
+      {Oxford Test of English}{May 2024}
+      {B2 Level, ref 263339}{Alicante, Spain}
+  \resumeSubHeadingListEnd
+\end{resumeSection}
+
+%-----------ADDITIONAL SKILLS-----------
+\begin{resumeSection}{Additional Skills}
+  \resumeSubHeadingListStart
+    \item[]\small
+      	\textbf{Tools:} AWS, Latex, git, Docker, Bash \\
+      	\textbf{Machine Learning Tools:} PyTorch, Hugging Face, pandas, numpy, matplotlib, n8n \\
+      	\textbf{Programming:} Python, C++, C, Swift, Matlab, noSQL, SQL, JavaScript \\
+      	\textbf{Languages:} English (Fluent), Spanish (Native), Catalan (Native)
+  \resumeSubHeadingListEnd
+\end{resumeSection}
+
+\end{document}

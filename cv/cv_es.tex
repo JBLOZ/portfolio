@@ -1,0 +1,211 @@
+%-------------------------
+% Currículum en Latex
+% Autor : Jake Gutierrez
+% Basado en: https://github.com/sb2nov/resume
+% Licencia : MIT
+%------------------------
+
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\usepackage{fontawesome5}
+\usepackage{multicol}
+\usepackage[most]{tcolorbox}
+\setlength{\multicolsep}{-3.0pt}
+\setlength{\columnsep}{-1pt}
+
+\pagestyle{fancy}
+\fancyhf{} % clear all header and footer fields
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Adjust margins
+\addtolength{\oddsidemargin}{-0.6in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1.19in}
+\addtolength{\topmargin}{-.7in}
+\addtolength{\textheight}{1.4in}
+
+\urlstyle{same}
+
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+\titleformat{\section}{
+  \vspace{-10pt}\scshape\raggedright\large\bfseries
+}{}{0em}{}[\color{black}\titlerule \vspace{-10pt}]
+
+%-------------------------
+% Custom commands
+\newcommand{\resumeItem}[1]{
+  \item\small{
+    {#1 \vspace{-2pt}}
+  }
+}
+
+\newcommand{\classesList}[4]{
+    \item\small{
+        {#1 #2 #3 #4 \vspace{-2pt}}
+  }
+}
+
+\newcommand{\resumeSubheading}[4]{
+  \vspace{-2pt}\item
+    \begin{tabular*}{1.0\textwidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1} & \textbf{\small #2} \\
+      \textit{\small#3} & \textit{\small #4} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubSubheading}[2]{
+    \item
+    \begin{tabular*}{0.97\textwidth}{l@{\extracolsep{\fill}}r}
+      	extit{\small#1} & \textit{\small #2} \\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeProjectHeading}[2]{
+    \item
+    \begin{tabular*}{1.001\textwidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & \textbf{\small #2}\\
+    \end{tabular*}\vspace{-7pt}
+}
+
+\newcommand{\resumeSubItem}[1]{\resumeItem{#1}\vspace{-7pt}}
+
+\newcommand{\bluehref}[2]{\href{#1}{\textcolor{RoyalBlue}{#2}}}
+
+\renewcommand\labelitemi{$\vcenter{\hbox{\tiny$\bullet$}}$}
+\renewcommand\labelitemii{$\vcenter{\hbox{\tiny$\bullet$}}$}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.0in, label={}]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-3pt}}
+
+\newenvironment{resumeSection}[1]{
+  \begin{tcolorbox}[
+    colback=white,
+    boxrule=0pt,
+    sharp corners,
+    enhanced,
+    breakable,
+    left=4pt,
+    right=4pt,
+    top=4pt,
+    bottom=4pt,
+    borderline west={0.6pt}{0pt}{black},
+    borderline east={0.6pt}{0pt}{black},
+    borderline north={0.6pt}{0pt}{black},
+    borderline south={0.6pt}{0pt}{black}
+  ]
+  {\scshape\large\bfseries #1}\par\vspace{1pt}
+}{
+  \end{tcolorbox}
+  \vspace{-2pt}
+}
+
+%-------------------------------------------
+%%%%%%  RESUME STARTS HERE  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+\begin{center}
+    {\Huge \scshape Jordi Blasco Lozano} \\ \vspace{1pt}
+    Alicante, Espa\~na \\ \vspace{1pt}
+    \small \raisebox{-0.1\height}\faPhone\ +34\,622\,47\,05\,35 ~
+    \href{mailto:jordiblloz@gmail.com}{\raisebox{-0.2\height}\faEnvelope\ \underline{jordiblloz@gmail.com}} ~
+    \href{https://linkedin.com/in/jbloz}{\raisebox{-0.2\height}\faLinkedin\ \underline{linkedin.com/in/jbloz}} ~
+    \href{https://github.com/JBLOZ}{\raisebox{-0.2\height}\faGithub\ \underline{github.com/JBLOZ}}
+\end{center}
+
+\vspace{4pt}
+{\scshape\large\bfseries Perfil}\par
+\vspace{2pt}
+\small Soy un estudiante de 3er año de Ingeniería en Inteligencia Artificial en busca de oportunidades para aplicar y ampliar mis conocimientos en IA, especialmente en proyectos relacionados con Python, algoritmos y desarrollo de aplicaciones. Poseo una sólida formación en inteligencia artificial, programación y algoritmos, junto con experiencia práctica en el desarrollo de videojuegos y colaboración internacional.
+\vspace{6pt}
+
+%-----------INTERNATIONAL MOBILITY-----------
+\begin{resumeSection}{Movilidad Internacional y Proyectos Clave}
+  \resumeSubHeadingListStart
+    \resumeProjectHeading
+      {\textbf{Erasmus Home Human Out Migration in Europe} $|$ \emph{Budapest, Hungría}}{Sept. 2021}
+      \resumeItemListStart
+        \resumeItem{Colaboré con socios internacionales en la iniciativa Erasmus \bluehref{https://erasmus-plus.ec.europa.eu/projects/search/details/2020-1-FR01-KA229-079855}{HOME} que aborda la emigración humana en Europa.}
+      \resumeItemListEnd
+    \resumeProjectHeading
+      {\textbf{Proyectos Universitarios} $|$ \emph{Alicante, España}}{2023 -- Actualidad}
+      \resumeItemListStart
+  \resumeItem{Implementé un \bluehref{https://github.com/JBLOZ/ROBOT-fuzzy-and-basiclogic}{sistema difuso} en Python usando \texttt{fuzzy\_expert} para controlar que un robot 2D siguiera lineas.}
+  \resumeItem{Desarrollé y documenté un \bluehref{https://github.com/JBLOZ/CNN-classification----geometric2d-and-cancer-dangerousness}{modelo ResNet-50} en MATLAB para la detección de cáncer de piel, alcanzando una precisión del 80\% para clasificaciones cancerosas y del 85\% para no cancerosas.}
+  \resumeItem{Construí una \bluehref{https://github.com/JBLOZ/py-ecommerce-software-proyect}{aplicación web de comercio electrónico inteligente} que permite la búsqueda de productos por texto o imagen a través de modelos de IA preentrenados.}
+  \resumeItem{Creé un \bluehref{https://github.com/JBLOZ/heart-attack-fuzzy-system}{sistema experto difuso} para estimar el riesgo de ataque cardíaco basado en preguntas clínicas estructuradas.}
+  \resumeItem{Diseñé un \bluehref{https://github.com/JBLOZ/PACMAN-CNN-Alphabeta}{agente de Pacman} que combina una CNN con heurísticas Alfa-Beta para un juego estratégico.}
+  \resumeItem{Desarrollé y evalué un sistema de clasificación multiclase de animales, comparando el rendimiento de clasificadores como Bayes Gaussiano, ventanas de Parzen y variantes de k-NN en un \bluehref{https://jbloz.github.io/portfolio/proyectos/aprendizaje_automatico/p_02/memoria.pdf}{conjunto de datos balanceado del Zoo con 7 especies}.}\resumeItem{Diseñé e implementé un \bluehref{https://jbloz.github.io/portfolio/proyectos/aws/p_03/memoria_03.pdf}{despliegue híbrido y seguro en AWS}, cubriendo la segmentación de VPC, el endurecimiento de políticas de S3 y el aprovisionamiento automatizado de EC2 para front/back, junto con un \bluehref{https://jbloz.github.io/portfolio/proyectos/aws/p_04/memoria_04.pdf}{despliegue canary avanzado} que escala las API de recomendación a través de subredes, grupos de destino de ALB y actualizaciones con containers.}\resumeItem{Para estudios de caso adicionales, explore mi \bluehref{https://jbloz.github.io/portfolio/proyectos/portfolio/index.html}{portafolio de proyectos}.}
+      \resumeItemListEnd
+  \resumeSubHeadingListEnd
+\end{resumeSection}
+
+%-----------INDI PROJECTS-----------
+\begin{resumeSection}{Proyectos Personales}
+  \resumeSubHeadingListStart
+    \resumeProjectHeading
+      {\textbf{Análisis de Spotify Wrapped} $|$ \emph{Alicante, España}}{Oct. 2024 -- 2025}
+      \resumeItemListStart
+  \resumeItem{Desarrollé un cuaderno de Jupyter que ofrece un análisis en profundidad de los \bluehref{https://github.com/JBLOZ/Spotify_Stats}{hábitos de escucha de Spotify.}}
+      \resumeItemListEnd
+    \resumeProjectHeading
+      {\textbf{Videojuego 3D con Unreal Engine 4} $|$ \emph{Alicante, España}}{2022}
+      \resumeItemListStart
+  \resumeItem{Monté y programé un \bluehref{https://www.youtube.com/watch?v=VaXI3NCUENQ}{videojuego 3D} utilizando Blueprints de Unreal Engine y C++.}
+      \resumeItemListEnd
+  \resumeSubHeadingListEnd
+\end{resumeSection}
+
+%-----------PROFESSIONAL EXPERIENCE-----------
+\begin{resumeSection}{Experiencia Profesional}
+  \resumeSubHeadingListStart
+    \resumeProjectHeading
+      {\textbf{Outlier} $|$ \emph{Alicante, España}}{2024 -- Actualidad}
+      \resumeItemListStart
+        \resumeItem{Trabajando como Investigador de Aprendizaje por Refuerzo a partir de Retroalimentación Humana, contribuyendo a múltiples proyectos de aprendizaje por refuerzo impulsados por retroalimentación humana.}
+      \resumeItemListEnd
+  \resumeSubHeadingListEnd
+\end{resumeSection}
+
+%-----------EDUCATION-----------
+\begin{resumeSection}{Educación}
+  \resumeSubHeadingListStart
+    \resumeSubheading
+      {Universidad de Alicante}{Sept. 2022 -- Actualidad}
+      {Grado en Ingeniería en Inteligencia Artificial (3er año, 100\% de asignaturas superadas)}{Alicante, España}
+    \resumeSubheading
+      {Oxford Test of English}{Mayo 2024}
+      {Nivel B2, ref 263339}{Alicante, España}
+  \resumeSubHeadingListEnd
+\end{resumeSection}
+
+%-----------ADDITIONAL SKILLS-----------
+\begin{resumeSection}{Habilidades Adicionales}
+  \resumeSubHeadingListStart
+    \item[]\small
+      	\textbf{Herramientas:} AWS, Latex, git, Docker, Bash \\
+      	\textbf{Herramientas de Machine Learning:} PyTorch, Hugging Face, pandas, numpy, matplotlib, n8n \\
+      	\textbf{Programación:} Python, C++, C, Swift, Matlab, noSQL, SQL, JavaScript \\
+      	\textbf{Idiomas:} Inglés (Fluido), Español (Nativo), Catalán (Nativo)
+  \resumeSubHeadingListEnd
+\end{resumeSection}
+
+\end{document}
