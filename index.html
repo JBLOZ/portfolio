@@ -3,741 +3,702 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jordi Blasco Lozano - Portfolio</title>
-    
-    <!-- 1. Tailwind CSS -->
+    <title>Jordi Blasco | Ingeniero IA & Developer</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- 2. Three.js (3D Library) -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script src="https://unpkg.com/lenis@1.0.45/dist/lenis.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     
-    <!-- 3. Lenis (Smooth Scroll) -->
-    <script src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
-
-    <!-- 4. Custom Styles & Fonts -->
     <style>
-        /* Import Inter font */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0a0a0a;
-            color: #e0e0e0;
-            overflow-x: hidden;
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syncopate:wght@400;700&display=swap');
+        
+        :root {
+            --primary: #a855f7;
+            --secondary: #00f3ff;
+            --bg: #030305;
+            --glass: rgba(255, 255, 255, 0.05);
         }
 
-        /* 3D Canvas Styling */
-        #three-canvas {
+        body {
+            margin: 0;
+            background-color: var(--bg);
+            color: white;
+            font-family: 'Space Grotesk', sans-serif;
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+        h1, h2, h3, .brand {
+            font-family: 'Syncopate', sans-serif;
+        }
+
+        /* Custom Cursor */
+        .cursor-dot, .cursor-outline {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100vh;
-            z-index: 0;
-            opacity: 0.5;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            z-index: 9999;
+            pointer-events: none;
+        }
+        .cursor-dot { width: 8px; height: 8px; background-color: var(--primary); }
+        .cursor-outline {
+            width: 40px; height: 40px;
+            border: 1px solid var(--primary);
+            transition: width 0.2s, height 0.2s, background-color 0.2s;
+        }
+        body.hovering .cursor-outline {
+            width: 60px; height: 60px;
+            background-color: rgba(168, 85, 247, 0.1);
+            border-color: transparent;
         }
 
-        /* Lenis requires this */
-        html.lenis {
-            height: auto;
-        }
-        .lenis.lenis-smooth {
-            scroll-behavior: auto !important;
-        }
-        .lenis.lenis-stopping {
-            /* Add styles for when scrolling stops */
-        }
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
 
-        /* Glassmorphism Card Style */
-        .glass-card {
-            background-color: rgba(16, 16, 16, 0.6);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+        canvas { position: fixed; top: 0; left: 0; z-index: -1; pointer-events: none; }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 1.5rem; /* 24px */
         }
         
-        /* Scroll-in Animation */
-        .fade-in-section {
-            opacity: 0;
-            transform: translateY(40px);
-            transition: opacity 1s ease-out, transform 1s ease-out;
-        }
-        .fade-in-section.is-visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        
-        /* Subtle glow for effect */
-        .hero-glow {
-            text-shadow: 0 0 15px rgba(168, 85, 247, 0.3), 0 0 30px rgba(168, 85, 247, 0.2);
-        }
-        
-        .project-card:hover .project-image {
-            transform: scale(1.05);
-        }
-
-        /* Hidden projects toggle */
-        .hidden-projects {
-            display: none;
-        }
-        .hidden-projects.show {
-            display: grid;
+        .gradient-text {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
     </style>
 </head>
-<body class="antialiased">
+<body>
+    <div id="root"></div>
 
-    <!-- Fixed 3D Canvas Background -->
-    <canvas id="three-canvas"></canvas>
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        const { motion, useScroll, useTransform, useSpring, useMotionValue, AnimatePresence } = window.Motion;
 
-    <!-- 
-      This is the main scrollable container.
-      Lenis will smooth-scroll this content.
-    -->
-    <main class="relative z-10">
-        
-        <!-- ========== HERO SECTION ========== -->
-        <section class="h-screen w-full flex flex-col justify-center items-center text-center p-4 relative overflow-hidden">
-            <div class="absolute inset-0 bg-gradient-to-b from-black/30 via-black/0 to-black/90 z-0"></div>
-            <div class="relative z-10">
-                <h1 class="text-5xl sm:text-7xl md:text-8xl font-extrabold text-white hero-glow">
-                    Jordi Blasco Lozano
-                </h1>
-                <p class="text-xl sm:text-2xl md:text-3xl text-purple-300 mt-4 font-light tracking-wide">
-                    Ingeniero en Inteligencia Artificial
-                </p>
-                <p class="text-lg text-gray-300 max-w-2xl mx-auto mt-6">
-                    Estudiante de 3er año especializado en Machine Learning, Deep Learning 
-                    y desarrollo de aplicaciones con IA
-                </p>
-            </div>
-            <!-- Scroll Down Indicator -->
-            <div class="absolute bottom-10 left-1/2 -translate-x-1/2 text-white z-10">
-                <svg class="w-6 h-6 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
-            </div>
-        </section>
-
-        <!-- Container for the rest of the content -->
-        <div class="max-w-6xl mx-auto px-4 py-24 space-y-32">
-
-            <!-- ========== ABOUT SECTION ========== -->
-            <section class="fade-in-section glass-card p-8 md:p-12">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
-                    <div class="md:col-span-2">
-                        <h2 class="text-4xl font-bold text-white mb-6">
-                            Sobre Mí
-                            <span class="block h-1 w-20 bg-purple-500 mt-2 rounded-full"></span>
-                        </h2>
-                        <div class="space-y-4 text-gray-300 text-lg">
-                            <p>
-                                Soy Jordi, estudiante de 3er año de Ingeniería en Inteligencia Artificial en la 
-                                Universidad de Alicante. Apasionado por el Machine Learning, el desarrollo de 
-                                aplicaciones inteligentes y la infraestructura cloud.
-                            </p>
-                            <p>
-                                Mi objetivo es aplicar la inteligencia artificial para resolver problemas reales, 
-                                combinando una sólida formación teórica con experiencia práctica en proyectos 
-                                universitarios y profesionales. Actualmente trabajo como Investigador en 
-                                Aprendizaje por Refuerzo en Outlier.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="hidden md:block">
-                        <img 
-                            src="https://avatars.githubusercontent.com/u/123325702?v=4" 
-                            alt="Jordi Blasco Lozano"
-                            class="rounded-full shadow-2xl object-cover aspect-square"
-                        >
-                    </div>
-                </div>
-            </section>
-
-            <!-- ========== PROJECTS SECTION ========== -->
-            <section class="fade-in-section">
-                <h2 class="text-4xl font-bold text-white mb-12 text-center">
-                    Proyectos Destacados
-                    <span class="block h-1 w-20 bg-purple-500 mt-2 rounded-full mx-auto"></span>
-                </h2>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-                    <!-- Project 1: AWS Projects -->
-                    <div class="glass-card p-6 group project-card overflow-hidden">
-                        <div class="overflow-hidden rounded-xl mb-6">
-                            <img src="https://placehold.co/600x400/1a1a1a/FF9900?text=AWS+Projects&font=inter" alt="Proyectos AWS" class="w-full h-auto object-cover project-image transition-transform duration-500 ease-out">
-                        </div>
-                        <h3 class="text-2xl font-semibold text-white mb-2">Proyectos AWS</h3>
-                        <p class="text-gray-400 mb-4">Colección de proyectos de infraestructura cloud con AWS incluyendo VPC, EC2, S3, ALB, estrategias de despliegue canary y arquitecturas escalables para APIs de recomendación.</p>
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            <span class="bg-orange-900/50 text-orange-300 text-xs font-medium px-3 py-1 rounded-full">AWS</span>
-                            <span class="bg-orange-900/50 text-orange-300 text-xs font-medium px-3 py-1 rounded-full">Docker</span>
-                            <span class="bg-orange-900/50 text-orange-300 text-xs font-medium px-3 py-1 rounded-full">EC2</span>
-                            <span class="bg-orange-900/50 text-orange-300 text-xs font-medium px-3 py-1 rounded-full">S3</span>
-                            <span class="bg-orange-900/50 text-orange-300 text-xs font-medium px-3 py-1 rounded-full">VPC</span>
-                        </div>
-                        <a href="https://github.com/JBLOZ/portfolio/tree/main/proyectos/aws" target="_blank" class="inline-block text-purple-400 hover:text-purple-300 transition-colors">
-                            Ver en GitHub →
-                        </a>
-                    </div>
-
-                    <!-- Project 2: E-commerce -->
-                    <div class="glass-card p-6 group project-card overflow-hidden">
-                        <div class="overflow-hidden rounded-xl mb-6">
-                            <img src="https://placehold.co/600x400/1a1a1a/6d28d9?text=E-Commerce+IA&font=inter" alt="E-commerce IA" class="w-full h-auto object-cover project-image transition-transform duration-500 ease-out">
-                        </div>
-                        <h3 class="text-2xl font-semibold text-white mb-2">E-commerce Inteligente con IA</h3>
-                        <p class="text-gray-400 mb-4">Aplicación web de comercio electrónico que permite búsqueda de productos por texto o imagen mediante modelos de IA preentrenados de Hugging Face.</p>
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            <span class="bg-purple-900/50 text-purple-300 text-xs font-medium px-3 py-1 rounded-full">Python</span>
-                            <span class="bg-purple-900/50 text-purple-300 text-xs font-medium px-3 py-1 rounded-full">PyTorch</span>
-                            <span class="bg-purple-900/50 text-purple-300 text-xs font-medium px-3 py-1 rounded-full">Hugging Face</span>
-                            <span class="bg-purple-900/50 text-purple-300 text-xs font-medium px-3 py-1 rounded-full">Computer Vision</span>
-                        </div>
-                        <a href="https://github.com/JBLOZ/py-ecommerce-software-proyect" target="_blank" class="inline-block text-purple-400 hover:text-purple-300 transition-colors">
-                            Ver en GitHub →
-                        </a>
-                    </div>
-
-                    <!-- Project 3: n8n Bot -->
-                    <div class="glass-card p-6 group project-card overflow-hidden">
-                        <div class="overflow-hidden rounded-xl mb-6">
-                            <img src="https://placehold.co/600x400/1a1a1a/1DB954?text=Trading+Bot&font=inter" alt="Bot Análisis Mercados" class="w-full h-auto object-cover project-image transition-transform duration-500 ease-out">
-                        </div>
-                        <h3 class="text-2xl font-semibold text-white mb-2">Bot de Análisis de Sentimiento de Mercados</h3>
-                        <p class="text-gray-400 mb-4">Bot de Telegram que realiza análisis de sentimiento sobre acciones y ETFs usando arquitectura Actor-Crítico con LLMs. Recopila noticias automáticamente y genera recomendaciones de inversión (Comprar/Mantener/Vender) con predicciones de tendencia.</p>
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            <span class="bg-green-900/50 text-green-300 text-xs font-medium px-3 py-1 rounded-full">n8n</span>
-                            <span class="bg-green-900/50 text-green-300 text-xs font-medium px-3 py-1 rounded-full">Telegram API</span>
-                            <span class="bg-green-900/50 text-green-300 text-xs font-medium px-3 py-1 rounded-full">Docker</span>
-                            <span class="bg-green-900/50 text-green-300 text-xs font-medium px-3 py-1 rounded-full">LLM</span>
-                            <span class="bg-green-900/50 text-green-300 text-xs font-medium px-3 py-1 rounded-full">Perplexity API</span>
-                        </div>
-                        <a href="https://github.com/JBLOZ/portfolio/tree/main/proyectos/n8n/p_01" target="_blank" class="inline-block text-purple-400 hover:text-purple-300 transition-colors">
-                            Ver en GitHub →
-                        </a>
-                    </div>
-
-                    <!-- Project 4: ResNet Cancer Detection -->
-                    <div class="glass-card p-6 group project-card overflow-hidden">
-                        <div class="overflow-hidden rounded-xl mb-6">
-                            <img src="https://placehold.co/600x400/1a1a1a/2563eb?text=ResNet-50&font=inter" alt="Cancer Detection" class="w-full h-auto object-cover project-image transition-transform duration-500 ease-out">
-                        </div>
-                        <h3 class="text-2xl font-semibold text-white mb-2">Detección de Cáncer con ResNet-50</h3>
-                        <p class="text-gray-400 mb-4">Modelo ResNet-50 en MATLAB para detección de cáncer de piel con 80% de precisión en clasificaciones cancerosas y 85% en no cancerosas.</p>
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            <span class="bg-blue-900/50 text-blue-300 text-xs font-medium px-3 py-1 rounded-full">MATLAB</span>
-                            <span class="bg-blue-900/50 text-blue-300 text-xs font-medium px-3 py-1 rounded-full">Deep Learning</span>
-                            <span class="bg-blue-900/50 text-blue-300 text-xs font-medium px-3 py-1 rounded-full">ResNet-50</span>
-                            <span class="bg-blue-900/50 text-blue-300 text-xs font-medium px-3 py-1 rounded-full">Computer Vision</span>
-                        </div>
-                        <a href="https://github.com/JBLOZ/heart-attack-fuzzy-system" target="_blank" class="inline-block text-purple-400 hover:text-purple-300 transition-colors">
-                            Ver en GitHub →
-                        </a>
-                    </div>
-
-                    <!-- Project 5: Robot Fuzzy System -->
-                    <div class="glass-card p-6 group project-card overflow-hidden">
-                        <div class="overflow-hidden rounded-xl mb-6">
-                            <img src="https://placehold.co/600x400/1a1a1a/00CED1?text=Fuzzy+Robot&font=inter" alt="Robot Fuzzy" class="w-full h-auto object-cover project-image transition-transform duration-500 ease-out">
-                        </div>
-                        <h3 class="text-2xl font-semibold text-white mb-2">Sistema Fuzzy de Control para Robot 2D</h3>
-                        <p class="text-gray-400 mb-4">Implementación de un sistema de lógica difusa en Python usando fuzzy_expert para controlar un robot 2D que sigue líneas con navegación autónoma.</p>
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            <span class="bg-cyan-900/50 text-cyan-300 text-xs font-medium px-3 py-1 rounded-full">Python</span>
-                            <span class="bg-cyan-900/50 text-cyan-300 text-xs font-medium px-3 py-1 rounded-full">fuzzy_expert</span>
-                            <span class="bg-cyan-900/50 text-cyan-300 text-xs font-medium px-3 py-1 rounded-full">Control Systems</span>
-                            <span class="bg-cyan-900/50 text-cyan-300 text-xs font-medium px-3 py-1 rounded-full">Robotics</span>
-                        </div>
-                        <a href="https://github.com/JBLOZ/ROBOT-fuzzy-and-basiclogic" target="_blank" class="inline-block text-purple-400 hover:text-purple-300 transition-colors">
-                            Ver en GitHub →
-                        </a>
-                    </div>
-
-                    <!-- Project 6: Zoo Classification -->
-                    <div class="glass-card p-6 group project-card overflow-hidden">
-                        <div class="overflow-hidden rounded-xl mb-6">
-                            <img src="https://placehold.co/600x400/1a1a1a/8B4513?text=Zoo+ML&font=inter" alt="Zoo Classification" class="w-full h-auto object-cover project-image transition-transform duration-500 ease-out">
-                        </div>
-                        <h3 class="text-2xl font-semibold text-white mb-2">Clasificación Multiclase Zoo Dataset</h3>
-                        <p class="text-gray-400 mb-4">Sistema de clasificación comparando Bayes Gaussiano, ventanas de Parzen y k-NN en dataset balanceado con 7 especies animales. Optimización con GridSearchCV.</p>
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            <span class="bg-amber-900/50 text-amber-300 text-xs font-medium px-3 py-1 rounded-full">Python</span>
-                            <span class="bg-amber-900/50 text-amber-300 text-xs font-medium px-3 py-1 rounded-full">Scikit-learn</span>
-                            <span class="bg-amber-900/50 text-amber-300 text-xs font-medium px-3 py-1 rounded-full">Machine Learning</span>
-                            <span class="bg-amber-900/50 text-amber-300 text-xs font-medium px-3 py-1 rounded-full">GridSearchCV</span>
-                        </div>
-                        <a href="https://github.com/JBLOZ/portfolio/tree/main/proyectos/aprendizaje_automatico/p_02" target="_blank" class="inline-block text-purple-400 hover:text-purple-300 transition-colors">
-                            Ver en GitHub →
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Hidden Projects Grid -->
-                <div id="moreProjects" class="hidden-projects grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 mt-12">
-                    
-                    <!-- Project 7: Heart Attack Fuzzy -->
-                    <div class="glass-card p-6 group project-card overflow-hidden">
-                        <div class="overflow-hidden rounded-xl mb-6">
-                            <img src="https://placehold.co/600x400/1a1a1a/DC143C?text=Heart+Attack&font=inter" alt="Heart Attack System" class="w-full h-auto object-cover project-image transition-transform duration-500 ease-out">
-                        </div>
-                        <h3 class="text-2xl font-semibold text-white mb-2">Sistema Experto Difuso - Riesgo Cardíaco</h3>
-                        <p class="text-gray-400 mb-4">Sistema experto difuso para estimar riesgo de ataque cardíaco basado en preguntas clínicas estructuradas y variables médicas.</p>
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            <span class="bg-red-900/50 text-red-300 text-xs font-medium px-3 py-1 rounded-full">Python</span>
-                            <span class="bg-red-900/50 text-red-300 text-xs font-medium px-3 py-1 rounded-full">fuzzy_expert</span>
-                            <span class="bg-red-900/50 text-red-300 text-xs font-medium px-3 py-1 rounded-full">Expert Systems</span>
-                            <span class="bg-red-900/50 text-red-300 text-xs font-medium px-3 py-1 rounded-full">Healthcare</span>
-                        </div>
-                        <a href="https://github.com/JBLOZ/heart-attack-fuzzy-system" target="_blank" class="inline-block text-purple-400 hover:text-purple-300 transition-colors">
-                            Ver en GitHub →
-                        </a>
-                    </div>
-
-                    <!-- Project 8: Pacman CNN -->
-                    <div class="glass-card p-6 group project-card overflow-hidden">
-                        <div class="overflow-hidden rounded-xl mb-6">
-                            <img src="https://placehold.co/600x400/1a1a1a/FFD700?text=Pacman+IA&font=inter" alt="Pacman IA" class="w-full h-auto object-cover project-image transition-transform duration-500 ease-out">
-                        </div>
-                        <h3 class="text-2xl font-semibold text-white mb-2">Agente Inteligente Pacman con CNN</h3>
-                        <p class="text-gray-400 mb-4">Agente que combina redes neuronales convolucionales (CNN) con heurísticas de poda Alfa-Beta para juego estratégico de Pacman con comportamiento adaptativo.</p>
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            <span class="bg-yellow-900/50 text-yellow-300 text-xs font-medium px-3 py-1 rounded-full">Python</span>
-                            <span class="bg-yellow-900/50 text-yellow-300 text-xs font-medium px-3 py-1 rounded-full">CNN</span>
-                            <span class="bg-yellow-900/50 text-yellow-300 text-xs font-medium px-3 py-1 rounded-full">Alpha-Beta Pruning</span>
-                            <span class="bg-yellow-900/50 text-yellow-300 text-xs font-medium px-3 py-1 rounded-full">Game AI</span>
-                        </div>
-                        <a href="https://github.com/JBLOZ/PACMAN-CNN-Alphabeta" target="_blank" class="inline-block text-purple-400 hover:text-purple-300 transition-colors">
-                            Ver en GitHub →
-                        </a>
-                    </div>
-
-                    <!-- Project 9: Unreal Engine Game -->
-                    <div class="glass-card p-6 group project-card overflow-hidden">
-                        <div class="overflow-hidden rounded-xl mb-6">
-                            <img src="https://placehold.co/600x400/1a1a1a/313131?text=Unreal+Game&font=inter" alt="Unreal Engine Game" class="w-full h-auto object-cover project-image transition-transform duration-500 ease-out">
-                        </div>
-                        <h3 class="text-2xl font-semibold text-white mb-2">Videojuego 3D con Unreal Engine 4</h3>
-                        <p class="text-gray-400 mb-4">Videojuego 3D completo desarrollado con Blueprints de Unreal Engine y C++, incluyendo mecánicas de juego, físicas y sistema de niveles.</p>
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            <span class="bg-gray-900/50 text-gray-300 text-xs font-medium px-3 py-1 rounded-full">Unreal Engine 4</span>
-                            <span class="bg-gray-900/50 text-gray-300 text-xs font-medium px-3 py-1 rounded-full">C++</span>
-                            <span class="bg-gray-900/50 text-gray-300 text-xs font-medium px-3 py-1 rounded-full">Blueprints</span>
-                            <span class="bg-gray-900/50 text-gray-300 text-xs font-medium px-3 py-1 rounded-full">Game Dev</span>
-                        </div>
-                        <a href="https://www.youtube.com/watch?v=VaXI3NCUENQ" target="_blank" class="inline-block text-purple-400 hover:text-purple-300 transition-colors">
-                            Ver Video del Juego →
-                        </a>
-                    </div>
-
-                    <!-- Project 10: Graph Matching -->
-                    <div class="glass-card p-6 group project-card overflow-hidden">
-                        <div class="overflow-hidden rounded-xl mb-6">
-                            <img src="https://placehold.co/600x400/1a1a1a/4169E1?text=Graph+Match&font=inter" alt="Graph Matching" class="w-full h-auto object-cover project-image transition-transform duration-500 ease-out">
-                        </div>
-                        <h3 class="text-2xl font-semibold text-white mb-2">Algoritmos de Graph Matching</h3>
-                        <p class="text-gray-400 mb-4">Implementación de algoritmos de emparejamiento de grafos para encontrar similitudes estructurales entre grafos mediante técnicas de optimización.</p>
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            <span class="bg-blue-900/50 text-blue-300 text-xs font-medium px-3 py-1 rounded-full">Python</span>
-                            <span class="bg-blue-900/50 text-blue-300 text-xs font-medium px-3 py-1 rounded-full">NetworkX</span>
-                            <span class="bg-blue-900/50 text-blue-300 text-xs font-medium px-3 py-1 rounded-full">Graph Theory</span>
-                            <span class="bg-blue-900/50 text-blue-300 text-xs font-medium px-3 py-1 rounded-full">Optimization</span>
-                        </div>
-                        <a href="https://github.com/JBLOZ/graph_matching" target="_blank" class="inline-block text-purple-400 hover:text-purple-300 transition-colors">
-                            Ver en GitHub →
-                        </a>
-                    </div>
-
-                    <!-- Project 11: Clustering -->
-                    <div class="glass-card p-6 group project-card overflow-hidden">
-                        <div class="overflow-hidden rounded-xl mb-6">
-                            <img src="https://placehold.co/600x400/1a1a1a/9370DB?text=Clustering&font=inter" alt="Clustering" class="w-full h-auto object-cover project-image transition-transform duration-500 ease-out">
-                        </div>
-                        <h3 class="text-2xl font-semibold text-white mb-2">Clustering y Análisis de Datos</h3>
-                        <p class="text-gray-400 mb-4">Implementación de algoritmos básicos de clustering (K-Means, DBSCAN) y técnicas de análisis de datos exploratorio para descubrimiento de patrones.</p>
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            <span class="bg-purple-900/50 text-purple-300 text-xs font-medium px-3 py-1 rounded-full">Python</span>
-                            <span class="bg-purple-900/50 text-purple-300 text-xs font-medium px-3 py-1 rounded-full">Scikit-learn</span>
-                            <span class="bg-purple-900/50 text-purple-300 text-xs font-medium px-3 py-1 rounded-full">Pandas</span>
-                            <span class="bg-purple-900/50 text-purple-300 text-xs font-medium px-3 py-1 rounded-full">Data Analysis</span>
-                        </div>
-                        <a href="https://github.com/JBLOZ/basic-clustering-and-DA" target="_blank" class="inline-block text-purple-400 hover:text-purple-300 transition-colors">
-                            Ver en GitHub →
-                        </a>
-                    </div>
-
-                    <!-- Project 12: C++ Calendar -->
-                    <div class="glass-card p-6 group project-card overflow-hidden">
-                        <div class="overflow-hidden rounded-xl mb-6">
-                            <img src="https://placehold.co/600x400/1a1a1a/FF6347?text=C%2B%2B+Calendar&font=inter" alt="C++ Calendar" class="w-full h-auto object-cover project-image transition-transform duration-500 ease-out">
-                        </div>
-                        <h3 class="text-2xl font-semibold text-white mb-2">Sistema de Calendario en C++</h3>
-                        <p class="text-gray-400 mb-4">Implementación de un sistema de calendario completo en C++ utilizando únicamente tipos base, con gestión de fechas, eventos y operaciones temporales.</p>
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            <span class="bg-red-900/50 text-red-300 text-xs font-medium px-3 py-1 rounded-full">C++</span>
-                            <span class="bg-red-900/50 text-red-300 text-xs font-medium px-3 py-1 rounded-full">Data Structures</span>
-                            <span class="bg-red-900/50 text-red-300 text-xs font-medium px-3 py-1 rounded-full">OOP</span>
-                            <span class="bg-red-900/50 text-red-300 text-xs font-medium px-3 py-1 rounded-full">Algorithms</span>
-                        </div>
-                        <a href="https://github.com/JBLOZ/IA/tree/main/2doAnyo/1erCuatri/progAvanzada/practica3" target="_blank" class="inline-block text-purple-400 hover:text-purple-300 transition-colors">
-                            Ver en GitHub →
-                        </a>
-                    </div>
-
-                    <!-- Project 13: Octree PyVista -->
-                    <div class="glass-card p-6 group project-card overflow-hidden">
-                        <div class="overflow-hidden rounded-xl mb-6">
-                            <img src="https://placehold.co/600x400/1a1a1a/20B2AA?text=Octree&font=inter" alt="Octree" class="w-full h-auto object-cover project-image transition-transform duration-500 ease-out">
-                        </div>
-                        <h3 class="text-2xl font-semibold text-white mb-2">Visualización de Octree con PyVista</h3>
-                        <p class="text-gray-400 mb-4">Implementación de estructura de datos Octree para particionamiento espacial y visualización 3D interactiva usando PyVista.</p>
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            <span class="bg-teal-900/50 text-teal-300 text-xs font-medium px-3 py-1 rounded-full">Python</span>
-                            <span class="bg-teal-900/50 text-teal-300 text-xs font-medium px-3 py-1 rounded-full">PyVista</span>
-                            <span class="bg-teal-900/50 text-teal-300 text-xs font-medium px-3 py-1 rounded-full">3D Visualization</span>
-                            <span class="bg-teal-900/50 text-teal-300 text-xs font-medium px-3 py-1 rounded-full">Spatial Data</span>
-                        </div>
-                        <a href="https://github.com/JBLOZ/Oc-tree-y-PyVista" target="_blank" class="inline-block text-purple-400 hover:text-purple-300 transition-colors">
-                            Ver en GitHub →
-                        </a>
-                    </div>
-
-                    <!-- Project 14: Movies Backend -->
-                    <div class="glass-card p-6 group project-card overflow-hidden">
-                        <div class="overflow-hidden rounded-xl mb-6">
-                            <img src="https://placehold.co/600x400/1a1a1a/FF1493?text=Movies+API&font=inter" alt="Movies Backend" class="w-full h-auto object-cover project-image transition-transform duration-500 ease-out">
-                        </div>
-                        <h3 class="text-2xl font-semibold text-white mb-2">Backend de Películas en Python</h3>
-                        <p class="text-gray-400 mb-4">API REST simple desarrollada en Python para gestión de películas con operaciones CRUD, autenticación y base de datos.</p>
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            <span class="bg-pink-900/50 text-pink-300 text-xs font-medium px-3 py-1 rounded-full">Python</span>
-                            <span class="bg-pink-900/50 text-pink-300 text-xs font-medium px-3 py-1 rounded-full">Flask/FastAPI</span>
-                            <span class="bg-pink-900/50 text-pink-300 text-xs font-medium px-3 py-1 rounded-full">REST API</span>
-                            <span class="bg-pink-900/50 text-pink-300 text-xs font-medium px-3 py-1 rounded-full">Backend</span>
-                        </div>
-                        <a href="https://github.com/JBLOZ/simple-py-backend-movies" target="_blank" class="inline-block text-purple-400 hover:text-purple-300 transition-colors">
-                            Ver en GitHub →
-                        </a>
-                    </div>
-
-                    <!-- Project 15: Universidad Completa -->
-                    <div class="glass-card p-6 group project-card overflow-hidden md:col-span-2">
-                        <div class="overflow-hidden rounded-xl mb-6">
-                            <img src="https://placehold.co/600x400/1a1a1a/FFD700?text=Practicas+IA&font=inter" alt="Prácticas Universidad" class="w-full h-auto object-cover project-image transition-transform duration-500 ease-out">
-                        </div>
-                        <h3 class="text-2xl font-semibold text-white mb-2">Repositorio Completo de Prácticas Universitarias</h3>
-                        <p class="text-gray-400 mb-4">Colección completa de todas las prácticas y proyectos desarrollados durante la carrera de Ingeniería en Inteligencia Artificial, incluyendo Machine Learning, Deep Learning, algoritmos, estructuras de datos y más.</p>
-                        <div class="flex flex-wrap gap-2 mb-4">
-                            <span class="bg-yellow-900/50 text-yellow-300 text-xs font-medium px-3 py-1 rounded-full">Python</span>
-                            <span class="bg-yellow-900/50 text-yellow-300 text-xs font-medium px-3 py-1 rounded-full">C++</span>
-                            <span class="bg-yellow-900/50 text-yellow-300 text-xs font-medium px-3 py-1 rounded-full">Machine Learning</span>
-                            <span class="bg-yellow-900/50 text-yellow-300 text-xs font-medium px-3 py-1 rounded-full">Algorithms</span>
-                            <span class="bg-yellow-900/50 text-yellow-300 text-xs font-medium px-3 py-1 rounded-full">Data Structures</span>
-                        </div>
-                        <a href="https://github.com/JBLOZ/IA" target="_blank" class="inline-block text-purple-400 hover:text-purple-300 transition-colors">
-                            Ver en GitHub →
-                        </a>
-                    </div>
-
-                </div>
-
-                <!-- Ver Más Button -->
-                <div class="text-center mt-12">
-                    <button id="toggleProjects" class="bg-purple-600 text-white font-bold text-lg px-8 py-4 rounded-lg hover:bg-purple-700 transition-colors duration-300 shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/50">
-                        Ver Más Proyectos
-                    </button>
-                </div>
-            </section>
-            
-            <!-- ========== SKILLS SECTION ========== -->
-            <section class="fade-in-section text-center">
-                <h2 class="text-4xl font-bold text-white mb-12">
-                    Stack Tecnológico
-                    <span class="block h-1 w-20 bg-purple-500 mt-2 rounded-full mx-auto"></span>
-                </h2>
-                <div class="flex flex-wrap justify-center gap-4 md:gap-6">
-                    <span class="glass-card px-6 py-3 text-lg font-medium rounded-lg">Python</span>
-                    <span class="glass-card px-6 py-3 text-lg font-medium rounded-lg">PyTorch</span>
-                    <span class="glass-card px-6 py-3 text-lg font-medium rounded-lg">Hugging Face</span>
-                    <span class="glass-card px-6 py-3 text-lg font-medium rounded-lg">AWS</span>
-                    <span class="glass-card px-6 py-3 text-lg font-medium rounded-lg">Docker</span>
-                    <span class="glass-card px-6 py-3 text-lg font-medium rounded-lg">MATLAB</span>
-                    <span class="glass-card px-6 py-3 text-lg font-medium rounded-lg">C++</span>
-                    <span class="glass-card px-6 py-3 text-lg font-medium rounded-lg">JavaScript</span>
-                    <span class="glass-card px-6 py-3 text-lg font-medium rounded-lg">SQL / noSQL</span>
-                    <span class="glass-card px-6 py-3 text-lg font-medium rounded-lg">Git</span>
-                    <span class="glass-card px-6 py-3 text-lg font-medium rounded-lg">Pandas</span>
-                    <span class="glass-card px-6 py-3 text-lg font-medium rounded-lg">NumPy</span>
-                    <span class="glass-card px-6 py-3 text-lg font-medium rounded-lg">n8n</span>
-                    <span class="glass-card px-6 py-3 text-lg font-medium rounded-lg">LaTeX</span>
-                </div>
-            </section>
-
-            <!-- ========== EXPERIENCE SECTION ========== -->
-            <section class="fade-in-section glass-card p-8 md:p-12">
-                <h2 class="text-4xl font-bold text-white mb-8">
-                    Experiencia Profesional
-                    <span class="block h-1 w-20 bg-purple-500 mt-2 rounded-full"></span>
-                </h2>
-                <div class="space-y-6">
-                    <div class="border-l-4 border-purple-500 pl-6">
-                        <h3 class="text-2xl font-semibold text-white mb-2">Investigador de Aprendizaje por Refuerzo</h3>
-                        <p class="text-purple-300 mb-2">Outlier • 2024 - Actualidad</p>
-                        <p class="text-gray-400">
-                            Contribuyendo a múltiples proyectos de aprendizaje por refuerzo impulsados por 
-                            retroalimentación humana (RLHF), optimizando modelos de IA mediante evaluación 
-                            y feedback experto.
-                        </p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- ========== EDUCATION SECTION ========== -->
-            <section class="fade-in-section glass-card p-8 md:p-12">
-                <h2 class="text-4xl font-bold text-white mb-8">
-                    Formación Académica
-                    <span class="block h-1 w-20 bg-purple-500 mt-2 rounded-full"></span>
-                </h2>
-                <div class="space-y-6">
-                    <div class="border-l-4 border-purple-500 pl-6">
-                        <h3 class="text-2xl font-semibold text-white mb-2">Grado en Ingeniería en Inteligencia Artificial</h3>
-                        <p class="text-purple-300 mb-2">Universidad de Alicante • 2022 - Actualidad</p>
-                        <p class="text-gray-400">
-                            3er año, 100% de asignaturas superadas. Especialización en Machine Learning, 
-                            Deep Learning, algoritmos de IA y desarrollo de aplicaciones inteligentes.
-                        </p>
-                    </div>
-                    <div class="border-l-4 border-purple-500 pl-6">
-                        <h3 class="text-2xl font-semibold text-white mb-2">Oxford Test of English - Nivel B2</h3>
-                        <p class="text-purple-300 mb-2">Mayo 2024</p>
-                        <p class="text-gray-400">
-                            Certificación oficial de nivel B2 en inglés (ref 263339).
-                        </p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- ========== CONTACT SECTION ========== -->
-            <section class="fade-in-section text-center glass-card p-8 md:p-16">
-                 <h2 class="text-4xl font-bold text-white mb-6">
-                    Construyamos Algo
-                    <br>
-                    <span class="text-purple-400">Juntos</span>
-                </h2>
-                <p class="text-lg text-gray-300 max-w-xl mx-auto mb-8">
-                    Estoy abierto a incorporarme a equipos que busquen talento en IA y Machine Learning, y también disponible para posiciones como programador junior.
-                    ¿Tu empresa necesita un perfil como el mío? Hablemos.
-                </p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                    <a href="mailto:jordiblloz@gmail.com"
-                       class="inline-block bg-purple-600 text-white font-bold text-lg px-8 py-4 rounded-lg
-                              hover:bg-purple-700 transition-colors duration-300
-                              shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/50">
-                        Contactar por Email
-                    </a>
-                    <a href="https://github.com/JBLOZ"
-                       target="_blank"
-                       class="inline-block bg-gray-700 text-white font-bold text-lg px-8 py-4 rounded-lg
-                              hover:bg-gray-600 transition-colors duration-300
-                              shadow-lg shadow-gray-500/30 hover:shadow-xl hover:shadow-gray-500/50">
-                        Ver GitHub
-                    </a>
-                    <a href="https://linkedin.com/in/jbloz"
-                       target="_blank"
-                       class="inline-block bg-blue-600 text-white font-bold text-lg px-8 py-4 rounded-lg
-                              hover:bg-blue-700 transition-colors duration-300
-                              shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/50">
-                        LinkedIn
-                    </a>
-                </div>
-            </section>
-        </div>
-
-        <section class="text-center p-8 mt-8">
-            <h2 class="text-2xl font-bold mb-4 text-gray-100">¿Quieres ver mi CV?</h2>
-            <div class="flex flex-col md:flex-row gap-4 justify-center items-center">
-                <a href="https://jbloz.github.io/portfolio/cv/cv_es.pdf" target="_blank" class="inline-block bg-purple-700 text-white font-semibold px-8 py-4 rounded-lg shadow-lg hover:bg-purple-800 transition-colors">Ver CV (Español)</a>
-                <a href="https://jbloz.github.io/portfolio/cv/cv_en.pdf" target="_blank" class="inline-block bg-blue-700 text-white font-semibold px-8 py-4 rounded-lg shadow-lg hover:bg-blue-800 transition-colors">View CV (English)</a>
-            </div>
-        </section>
-
-        <!-- ========== FOOTER ========== -->
-        <footer class="text-center p-8 mt-24 border-t border-gray-800/50">
-            <p class="text-gray-600 text-sm mb-2">
-                Alicante, España • <a href="mailto:jordiblloz@gmail.com" class="hover:text-purple-400 transition-colors">jordiblloz@gmail.com</a>
-            </p>
-            <p class="text-gray-500">
-                Diseñado y Desarrollado por Jordi Blasco Lozano &copy; 2025
-            </p>
-        </footer>
-
-    </main>
-    
-
-    <!-- 
-    ==================================================
-    MAIN JAVASCRIPT LOGIC
-    ==================================================
-    -->
-    <script type="module">
-        let scene, camera, renderer, torusKnot, pointLight;
-        let mouse = new THREE.Vector2();
-
-        // ========== 1. LENIS (SMOOTH SCROLL) ==========
-        const lenis = new Lenis();
-
-        function raf(time) {
-            lenis.raf(time);
-            requestAnimationFrame(raf);
-        }
-
-        requestAnimationFrame(raf);
-        
-        // ========== 2. THREE.JS (3D BACKGROUND) ==========
-        function initThree() {
-            const canvas = document.getElementById('three-canvas');
-            if (!canvas) return;
-
-            // Scene
-            scene = new THREE.Scene();
-
-            // Camera
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 2.5;
-
-            // Renderer
-            renderer = new THREE.WebGLRenderer({
-                canvas: canvas,
-                alpha: true // Transparent background
-            });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-            // Geometry & Material
-            const geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16);
-            const material = new THREE.MeshStandardMaterial({
-                color: 0xa855f7, // Purple
-                metalness: 0.8,
-                roughness: 0.2
-            });
-            
-            torusKnot = new THREE.Mesh(geometry, material);
-            scene.add(torusKnot);
-
-            // Lights
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
-            scene.add(ambientLight);
-
-            pointLight = new THREE.PointLight(0xffffff, 1);
-            pointLight.position.set(2, 2, 2);
-            scene.add(pointLight);
-
-            // Handle Window Resize
-            window.addEventListener('resize', onWindowResize, false);
-            
-            // Handle Mouse Move
-            window.addEventListener('mousemove', onMouseMove, false);
-
-            // Start animation loop
-            animate();
-        }
-
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-
-        function onMouseMove(event) {
-            // Normalize mouse position from -1 to 1
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-
-            // Animate the 3D object
-            if (torusKnot) {
-                torusKnot.rotation.x += 0.002;
-                torusKnot.rotation.y += 0.003;
-
-                // Make light follow mouse for interaction
-                pointLight.position.x = mouse.x * 5;
-                pointLight.position.y = mouse.y * 5;
-                pointLight.position.z = 2;
-                
-                // Parallax scroll effect for the 3D model
-                // The 'lenis.animatedScroll' gives the smooth scroll position
-                torusKnot.position.y = (lenis.animatedScroll / window.innerHeight) * -1;
+        // --- DATA: TODOS LOS PROYECTOS ---
+        const ALL_PROJECTS = [
+            { 
+                title: "Infraestructura Cloud AWS", 
+                tags: ["AWS", "Docker", "EC2", "VPC"], 
+                desc: "Despliegue completo de infraestructura cloud incluyendo VPCs, balanceadores de carga (ALB), auto-scaling y buckets S3 para alta disponibilidad.",
+                img: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=800",
+                link: "https://github.com/JBLOZ/portfolio/tree/main/proyectos/aws",
+                featured: true
+            },
+            { 
+                title: "E-commerce con IA", 
+                tags: ["Python", "PyTorch", "Hugging Face"], 
+                desc: "Plataforma de comercio electrónico capaz de buscar productos mediante texto e imágenes utilizando modelos pre-entrenados de Computer Vision.",
+                img: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&q=80&w=800", 
+                link: "https://github.com/JBLOZ/py-ecommerce-software-proyect",
+                featured: true
+            },
+            { 
+                title: "Bot de Trading & Sentimiento", 
+                tags: ["n8n", "LLMs", "Telegram API"], 
+                desc: "Bot autónomo que analiza noticias financieras y sentimiento de mercado usando LLMs para generar señales de compra/venta en tiempo real.",
+                img: "https://images.unsplash.com/photo-1642543492481-44e81e3914a7?auto=format&fit=crop&q=80&w=800",
+                link: "https://github.com/JBLOZ/portfolio/tree/main/proyectos/n8n/p_01",
+                featured: true
+            },
+            {
+                title: "Detección Médica con ResNet",
+                tags: ["Matlab", "Deep Learning", "CNN"],
+                desc: "Implementación de ResNet-50 para la detección de cáncer de piel con una precisión del 80-85% en diagnósticos.",
+                img: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=800",
+                link: "https://github.com/JBLOZ/heart-attack-fuzzy-system",
+                featured: true
+            },
+            // --- Proyectos del Portfolio Antiguo ---
+            {
+                title: "Sistema Fuzzy Robot 2D",
+                tags: ["Python", "Fuzzy Logic", "Robotics"],
+                desc: "Sistema de lógica difusa para control de navegación autónoma de un robot 2D.",
+                img: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=80&w=800",
+                link: "https://github.com/JBLOZ/ROBOT-fuzzy-and-basiclogic",
+                featured: false
+            },
+            {
+                title: "Clasificación Zoo Dataset",
+                tags: ["Python", "Scikit-learn", "ML"],
+                desc: "Comparativa de algoritmos (Bayes, k-NN) para clasificación multiclase de especies animales.",
+                img: "https://images.unsplash.com/photo-1474511320723-9a56873867b5?auto=format&fit=crop&q=80&w=800",
+                link: "https://github.com/JBLOZ/portfolio/tree/main/proyectos/aprendizaje_automatico/p_02",
+                featured: false
+            },
+            {
+                title: "Sistema Experto Cardíaco",
+                tags: ["Python", "Expert Systems", "Healthcare"],
+                desc: "Sistema experto difuso para estimar riesgo de ataque cardíaco basado en variables médicas.",
+                img: "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&q=80&w=800",
+                link: "https://github.com/JBLOZ/heart-attack-fuzzy-system",
+                featured: false
+            },
+            {
+                title: "Pacman IA con CNN",
+                tags: ["Python", "CNN", "Game AI"],
+                desc: "Agente inteligente para Pacman usando redes convolucionales y poda Alfa-Beta.",
+                img: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=800",
+                link: "https://github.com/JBLOZ/PACMAN-CNN-Alphabeta",
+                featured: false
+            },
+            {
+                title: "Videojuego Unreal Engine 4",
+                tags: ["UE4", "C++", "Blueprints"],
+                desc: "Desarrollo completo de un videojuego 3D con físicas y sistema de niveles.",
+                img: "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?auto=format&fit=crop&q=80&w=800",
+                link: "https://www.youtube.com/watch?v=VaXI3NCUENQ",
+                featured: false
+            },
+            {
+                title: "Graph Matching",
+                tags: ["Python", "NetworkX", "Graphs"],
+                desc: "Algoritmos de optimización para encontrar similitudes estructurales entre grafos.",
+                img: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&q=80&w=800",
+                link: "https://github.com/JBLOZ/graph_matching",
+                featured: false
+            },
+            {
+                title: "Clustering & Data Analysis",
+                tags: ["Python", "Pandas", "K-Means"],
+                desc: "Análisis exploratorio y segmentación de datos usando algoritmos no supervisados.",
+                img: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=800",
+                link: "https://github.com/JBLOZ/basic-clustering-and-DA",
+                featured: false
+            },
+            {
+                title: "Calendario en C++",
+                tags: ["C++", "OOP", "Algorithms"],
+                desc: "Implementación desde cero de un sistema de gestión de fechas y eventos.",
+                img: "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&q=80&w=800",
+                link: "https://github.com/JBLOZ/IA/tree/main/2doAnyo/1erCuatri/progAvanzada/practica3",
+                featured: false
+            },
+            {
+                title: "Octree con PyVista",
+                tags: ["Python", "3D Viz", "Spatial"],
+                desc: "Visualización interactiva de estructuras de datos espaciales Octree.",
+                img: "https://images.unsplash.com/photo-1470075801209-17f9ec0cada6?auto=format&fit=crop&q=80&w=800",
+                link: "https://github.com/JBLOZ/Oc-tree-y-PyVista",
+                featured: false
+            },
+             {
+                title: "Repositorio Universitario",
+                tags: ["All", "University", "Practice"],
+                desc: "Colección completa de prácticas de carrera: Algoritmos, IA, Estructuras de datos.",
+                img: "https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?auto=format&fit=crop&q=80&w=800",
+                link: "https://github.com/JBLOZ/IA",
+                featured: false
             }
+        ];
 
-            renderer.render(scene, camera);
-        }
+        // --- 1. Cursor Personalizado ---
+        const CustomCursor = () => {
+            const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+            const [outlinePos, setOutlinePos] = useState({ x: 0, y: 0 });
+            const requestRef = useRef();
+            const previousTimeRef = useRef();
 
-        // ========== 3. SCROLL FADE-IN ANIMATIONS ==========
-        function initScrollAnimations() {
-            const sections = document.querySelectorAll('.fade-in-section');
-            
-            const options = {
-                root: null, // viewport
-                rootMargin: '0px',
-                threshold: 0.15 // 15% visible
-            };
-
-            const observer = new IntersectionObserver((entries, observer) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('is-visible');
-                        // Optional: unobserve after it's visible
-                        // observer.unobserve(entry.target); 
-                    }
-                });
-            }, options);
-
-            sections.forEach(section => {
-                observer.observe(section);
-            });
-        }
-
-        // ========== 4. TOGGLE MORE PROJECTS ==========
-        function initProjectsToggle() {
-            const toggleBtn = document.getElementById('toggleProjects');
-            const moreProjects = document.getElementById('moreProjects');
-            
-            if (toggleBtn && moreProjects) {
-                toggleBtn.addEventListener('click', () => {
-                    moreProjects.classList.toggle('show');
-                    
-                    if (moreProjects.classList.contains('show')) {
-                        toggleBtn.textContent = 'Ver Menos Proyectos';
-                        // Smooth scroll to the newly revealed content
-                        setTimeout(() => {
-                            moreProjects.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                        }, 100);
+            useEffect(() => {
+                const moveCursor = (e) => {
+                    setMousePos({ x: e.clientX, y: e.clientY });
+                    const target = e.target;
+                    if (target.closest('a') || target.closest('button') || target.closest('.interactive')) {
+                        document.body.classList.add('hovering');
                     } else {
-                        toggleBtn.textContent = 'Ver Más Proyectos';
+                        document.body.classList.remove('hovering');
                     }
-                });
-            }
-        }
-        
-        // --- INITIALIZE EVERYTHING ---
-        
-        // Wait for the document to be fully loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            try {
-                initThree();
-                initScrollAnimations();
-                initProjectsToggle();
-            } catch (error) {
-                console.error("Failed to initialize animations:", error);
-                // Fallback for animations if something fails
-                document.querySelectorAll('.fade-in-section').forEach(el => {
-                    el.classList.add('is-visible');
-                });
-            }
-        });
+                };
+                window.addEventListener('mousemove', moveCursor);
+                
+                const animateOutline = (time) => {
+                    if (previousTimeRef.current !== undefined) {
+                        setOutlinePos(prev => ({
+                            x: prev.x + (mousePos.x - prev.x) * 0.15,
+                            y: prev.y + (mousePos.y - prev.y) * 0.15
+                        }));
+                    }
+                    previousTimeRef.current = time;
+                    requestRef.current = requestAnimationFrame(animateOutline);
+                };
+                requestRef.current = requestAnimationFrame(animateOutline);
 
+                return () => {
+                    window.removeEventListener('mousemove', moveCursor);
+                    cancelAnimationFrame(requestRef.current);
+                };
+            }, [mousePos]);
+
+            return (
+                <>
+                    <div className="cursor-outline hidden md:block" style={{ left: `${outlinePos.x}px`, top: `${outlinePos.y}px` }} />
+                    <div className="cursor-dot hidden md:block" style={{ left: `${mousePos.x}px`, top: `${mousePos.y}px` }} />
+                </>
+            );
+        };
+
+        // --- 2. Fondo 3D ---
+        const Background3D = () => {
+            const mountRef = useRef(null);
+
+            useEffect(() => {
+                if (!mountRef.current) return;
+                const container = mountRef.current;
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+                
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                container.appendChild(renderer.domElement);
+
+                const particlesGeometry = new THREE.BufferGeometry();
+                const particlesCount = 1200;
+                const posArray = new Float32Array(particlesCount * 3);
+                for(let i = 0; i < particlesCount * 3; i++) posArray[i] = (Math.random() - 0.5) * 18;
+                particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+                const material = new THREE.PointsMaterial({ size: 0.025, color: 0xa855f7, transparent: true, opacity: 0.6 });
+                const particlesMesh = new THREE.Points(particlesGeometry, material);
+                scene.add(particlesMesh);
+
+                const geometry = new THREE.TorusKnotGeometry(3, 0.8, 100, 16);
+                const wireframeMaterial = new THREE.MeshBasicMaterial({ color: 0x00f3ff, wireframe: true, transparent: true, opacity: 0.08 });
+                const torusKnot = new THREE.Mesh(geometry, wireframeMaterial);
+                scene.add(torusKnot);
+
+                camera.position.z = 6;
+
+                let mouseX = 0, mouseY = 0;
+                const onMove = (e) => { mouseX = e.clientX; mouseY = e.clientY; };
+                document.addEventListener('mousemove', onMove);
+
+                const clock = new THREE.Clock();
+                let animationId;
+
+                const animate = () => {
+                    const t = clock.getElapsedTime();
+                    particlesMesh.rotation.y = t * 0.03 + mouseX * 0.00005;
+                    particlesMesh.rotation.x = mouseY * 0.00005;
+                    torusKnot.rotation.x = t * 0.05;
+                    torusKnot.rotation.y = t * 0.08;
+                    renderer.render(scene, camera);
+                    animationId = requestAnimationFrame(animate);
+                };
+                animate();
+
+                const handleResize = () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                };
+                window.addEventListener('resize', handleResize);
+
+                return () => {
+                    window.removeEventListener('resize', handleResize);
+                    document.removeEventListener('mousemove', onMove);
+                    cancelAnimationFrame(animationId);
+                    if (container && renderer.domElement) container.removeChild(renderer.domElement);
+                    geometry.dispose(); material.dispose(); renderer.dispose();
+                };
+            }, []);
+            return <div ref={mountRef} style={{ position: 'fixed', top: 0, left: 0, zIndex: -1 }} />;
+        };
+
+        // --- 3. Navegación ---
+        const Navbar = ({ view, setView }) => {
+            const [isOpen, setIsOpen] = useState(false);
+            const links = ['Sobre Mí', 'Skills', 'Proyectos', 'Experiencia', 'Contacto'];
+            
+            const handleNav = (item) => {
+                if (view !== 'home') {
+                    setView('home');
+                    // Wait for render then scroll
+                    setTimeout(() => {
+                        const el = document.getElementById(item.toLowerCase().replace(' ', '-'));
+                        if(el) el.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
+                } else {
+                    const el = document.getElementById(item.toLowerCase().replace(' ', '-'));
+                    if(el) el.scrollIntoView({ behavior: 'smooth' });
+                }
+                setIsOpen(false);
+            }
+
+            return (
+                <nav className="fixed top-0 w-full z-50 px-6 py-6 flex justify-between items-center mix-blend-difference text-white">
+                    <div 
+                        className="brand text-xl md:text-2xl font-bold tracking-tighter cursor-pointer interactive"
+                        onClick={() => setView('home')}
+                    >
+                        JORDI<span className="text-purple-400">.</span>DEV
+                    </div>
+                    
+                    {view === 'home' ? (
+                        <div className="hidden md:flex gap-8 font-medium text-sm tracking-widest">
+                            {links.map((item) => (
+                                <a 
+                                    key={item} 
+                                    href={`#${item.toLowerCase().replace(' ', '-')}`} 
+                                    className="hover:text-purple-400 transition-colors interactive relative group uppercase"
+                                >
+                                    {item}
+                                    <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-purple-400 transition-all group-hover:w-full"></span>
+                                </a>
+                            ))}
+                        </div>
+                    ) : (
+                        <button 
+                            onClick={() => setView('home')}
+                            className="hidden md:flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:text-purple-400 transition-colors interactive"
+                        >
+                            <i data-lucide="arrow-left" className="w-4 h-4"></i> Volver al Inicio
+                        </button>
+                    )}
+
+                    <div className="md:hidden interactive" onClick={() => setIsOpen(!isOpen)}>
+                        <div className="space-y-2 cursor-pointer">
+                            <div className={`w-8 h-0.5 bg-white transition-transform ${isOpen ? 'rotate-45 translate-y-2.5' : ''}`}></div>
+                            <div className={`w-8 h-0.5 bg-white transition-opacity ${isOpen ? 'opacity-0' : ''}`}></div>
+                            <div className={`w-8 h-0.5 bg-white transition-transform ${isOpen ? '-rotate-45 -translate-y-2.5' : ''}`}></div>
+                        </div>
+                    </div>
+
+                    {isOpen && (
+                        <motion.div 
+                            initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
+                            className="absolute top-24 right-6 w-64 glass-panel p-6 rounded-xl md:hidden flex flex-col gap-4 z-50"
+                        >
+                            {view !== 'home' && (
+                                 <button onClick={() => { setView('home'); setIsOpen(false); }} className="text-lg hover:text-purple-400 uppercase text-left font-bold text-purple-300 mb-4 border-b border-white/10 pb-4">
+                                    ← Volver
+                                </button>
+                            )}
+                            {links.map((item) => (
+                                <a key={item} onClick={() => handleNav(item)} className="text-lg hover:text-purple-400 uppercase cursor-pointer">
+                                    {item}
+                                </a>
+                            ))}
+                        </motion.div>
+                    )}
+                </nav>
+            );
+        };
+
+        // --- Componentes de Sección Home ---
+        const Hero = () => {
+            const { scrollY } = useScroll();
+            const y1 = useTransform(scrollY, [0, 500], [0, 200]);
+            const opacity = useTransform(scrollY, [0, 300], [1, 0]);
+
+            return (
+                <section className="h-screen flex flex-col justify-center items-center relative px-4 text-center">
+                    <motion.div style={{ y: y1, opacity }} className="z-10 max-w-5xl">
+                        <motion.div 
+                            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                            className="inline-block mb-6 px-4 py-1 border border-purple-500/30 rounded-full bg-purple-500/10"
+                        >
+                            <span className="text-purple-300 text-xs md:text-sm tracking-[0.3em] uppercase font-bold">
+                                Ingeniero en IA & Desarrollador
+                            </span>
+                        </motion.div>
+
+                        <motion.h1 
+                            initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
+                            className="text-5xl md:text-8xl font-bold leading-tight mb-8"
+                        >
+                            JORDI <br />
+                            <span className="stroke-text text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-500">BLASCO</span>
+                        </motion.h1>
+
+                        <motion.p
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
+                            className="text-gray-400 max-w-2xl mx-auto text-lg mb-8 leading-relaxed"
+                        >
+                            Estudiante de 3er año especializado en <span className="text-white">Machine Learning</span>, <span className="text-white">Deep Learning</span> y arquitecturas Cloud. Transformando teoría en soluciones reales.
+                        </motion.p>
+
+                        <motion.div
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
+                            className="flex flex-col md:flex-row justify-center gap-4"
+                        >
+                            <a href="#proyectos" className="interactive px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-full transition-all duration-300 tracking-widest text-sm font-bold uppercase shadow-[0_0_20px_rgba(168,85,247,0.3)]">
+                                Ver Proyectos
+                            </a>
+                            <a href="https://github.com/JBLOZ" target="_blank" className="interactive px-8 py-4 border border-gray-600 hover:border-white text-white rounded-full transition-all duration-300 tracking-widest text-sm font-bold uppercase">
+                                GitHub
+                            </a>
+                        </motion.div>
+                    </motion.div>
+                    <motion.div style={{ opacity }} className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
+                        <span className="text-[10px] text-gray-500 uppercase tracking-widest">Scroll</span>
+                        <div className="w-[1px] h-12 bg-gradient-to-b from-purple-500 to-transparent"></div>
+                    </motion.div>
+                </section>
+            );
+        };
+
+        const About = () => {
+            return (
+                <section id="sobre-mí" className="min-h-screen flex items-center justify-center py-24 relative">
+                    <div className="container mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
+                        <motion.div 
+                            initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}
+                            className="relative order-2 md:order-1"
+                        >
+                            <div className="glass-panel p-2 rounded-2xl overflow-hidden relative group">
+                                <div className="absolute inset-0 bg-purple-500/20 group-hover:bg-purple-500/0 transition-colors z-10 duration-500"></div>
+                                <img src="https://avatars.githubusercontent.com/u/123325702?v=4" alt="Jordi Blasco" className="w-full h-[400px] md:h-[500px] object-cover grayscale group-hover:grayscale-0 transition-all duration-700" />
+                            </div>
+                        </motion.div>
+                        <div className="order-1 md:order-2">
+                            <motion.h2 initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-4xl md:text-6xl font-bold mb-8 leading-tight">
+                                MÁS ALLÁ DEL <br /> <span className="gradient-text">CÓDIGO</span>
+                            </motion.h2>
+                            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }} className="text-gray-400 text-lg space-y-6 leading-relaxed">
+                                <p>Soy Jordi, un apasionado de la <strong>Inteligencia Artificial</strong> y el desarrollo de software. Actualmente curso mi 3er año en la Universidad de Alicante, combinando mis estudios con investigación en RLHF.</p>
+                                <p>Mi objetivo es claro: aplicar la IA para resolver problemas complejos, fusionando una base teórica sólida con una ejecución práctica impecable en infraestructura Cloud y desarrollo Fullstack.</p>
+                            </motion.div>
+                            <div className="mt-8 flex gap-4">
+                                <a href="https://jbloz.github.io/portfolio/cv/cv_es.pdf" target="_blank" className="interactive text-purple-400 border-b border-purple-400 hover:text-white hover:border-white transition-colors pb-1">Descargar CV (ES)</a>
+                                <a href="https://jbloz.github.io/portfolio/cv/cv_en.pdf" target="_blank" className="interactive text-gray-500 border-b border-gray-500 hover:text-white hover:border-white transition-colors pb-1">Download CV (EN)</a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        const Skills = () => {
+            const skillSets = [
+                { category: "AI & Data Science", skills: ["Python", "PyTorch", "Hugging Face", "Scikit-learn", "Pandas", "NumPy", "Matlab"] },
+                { category: "Cloud & DevOps", skills: ["AWS (EC2, S3, VPC)", "Docker", "Git", "Linux", "CI/CD"] },
+                { category: "Development", skills: ["JavaScript", "C++", "React", "n8n", "SQL", "NoSQL", "REST APIs"] },
+                { category: "Soft Skills", skills: ["Investigación", "Trabajo en Equipo", "Resolución de Problemas", "Inglés (B2 Oxford)"] }
+            ];
+            return (
+                <section id="skills" className="py-24 px-6">
+                    <div className="container mx-auto">
+                        <motion.h2 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-4xl md:text-6xl font-bold mb-16 text-center">
+                            STACK <span className="text-gray-700">TECNOLÓGICO</span>
+                        </motion.h2>
+                        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {skillSets.map((s, i) => (
+                                <motion.div key={i} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="glass-panel p-8 rounded-2xl hover:bg-white/5 transition-colors">
+                                    <h3 className="text-xl font-bold mb-4 text-purple-300 uppercase tracking-wider">{s.category}</h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {s.skills.map(skill => <span key={skill} className="px-3 py-1 bg-white/5 rounded-full text-sm text-gray-300 border border-white/10">{skill}</span>)}
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        const Experience = () => {
+             return (
+                <section id="experiencia" className="py-24 px-6 bg-gradient-to-b from-transparent to-black/50">
+                    <div className="container mx-auto max-w-4xl">
+                        <h2 className="text-4xl md:text-6xl font-bold mb-16 text-center">EXPERIENCIA</h2>
+                        <div className="relative border-l border-gray-800 ml-4 md:ml-0 pl-8 md:pl-12 space-y-16">
+                            <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="relative">
+                                <span className="absolute -left-[41px] md:-left-[57px] top-2 w-5 h-5 rounded-full bg-purple-500 border-4 border-[#030305]"></span>
+                                <div className="mb-2 flex flex-col md:flex-row md:items-center md:justify-between">
+                                    <h3 className="text-2xl font-bold text-white">Investigador de Aprendizaje por Refuerzo</h3>
+                                    <span className="text-purple-400 font-mono text-sm">2024 - Actualidad</span>
+                                </div>
+                                <div className="text-lg text-gray-400 mb-4">Outlier AI</div>
+                                <p className="text-gray-400 leading-relaxed">Contribuyo a proyectos de RLHF (Reinforcement Learning from Human Feedback) para optimizar modelos de IA generativa, evaluando respuestas y proporcionando datos de alta calidad para el entrenamiento.</p>
+                            </motion.div>
+                        </div>
+                    </div>
+                </section>
+            )
+        }
+
+        const ProjectCard = ({ title, tags, desc, img, link, index, dense }) => {
+            return (
+                <motion.div 
+                    initial={{ opacity: 0, y: 50 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.05 }}
+                    className={`group relative rounded-3xl overflow-hidden bg-[#0a0a0a] border border-white/10 hover:border-purple-500/50 transition-all duration-500 ${dense ? 'h-[350px]' : 'h-[500px]'}`}
+                >
+                    <div className="h-[50%] overflow-hidden relative">
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] to-transparent z-10"></div>
+                        <img src={img} alt={title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-70" />
+                    </div>
+                    <div className="p-6 md:p-8 relative z-20 -mt-6 flex flex-col h-[50%] justify-between">
+                        <div>
+                            <div className="flex gap-2 mb-3 flex-wrap">
+                                {tags.slice(0,3).map(t => (
+                                    <span key={t} className="text-[10px] font-bold uppercase tracking-wider py-1 px-2 bg-purple-500/20 text-purple-300 rounded">{t}</span>
+                                ))}
+                            </div>
+                            <h3 className={`font-bold mb-2 group-hover:text-purple-400 transition-colors ${dense ? 'text-xl' : 'text-2xl'}`}>{title}</h3>
+                            <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">{desc}</p>
+                        </div>
+                        <a href={link} target="_blank" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest hover:text-purple-400 transition-colors interactive mt-4">
+                            Ver en GitHub <i data-lucide="arrow-right" className="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </motion.div>
+            )
+        }
+
+        const FeaturedProjects = ({ setView }) => {
+            const featured = ALL_PROJECTS.filter(p => p.featured);
+            return (
+                <section id="proyectos" className="py-24 px-6">
+                     <div className="container mx-auto">
+                        <div className="mb-16">
+                            <h2 className="text-4xl md:text-7xl font-bold">PROYECTOS <br /> <span className="gradient-text">DESTACADOS</span></h2>
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-8">
+                            {featured.map((p, i) => <ProjectCard key={i} index={i} {...p} />)}
+                        </div>
+                        <div className="mt-16 text-center">
+                            <button 
+                                onClick={() => setView('projects')}
+                                className="inline-block border border-gray-700 hover:border-purple-500 text-gray-400 hover:text-white px-12 py-4 rounded-full transition-all uppercase text-sm font-bold tracking-widest interactive hover:bg-purple-500/10"
+                            >
+                                Ver Todos los Proyectos ({ALL_PROJECTS.length})
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            )
+        }
+
+        const Contact = () => {
+            return (
+                <section id="contacto" className="min-h-screen flex flex-col justify-center px-6 relative overflow-hidden py-24">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[100px] pointer-events-none"></div>
+                    <div className="container mx-auto relative z-10 text-center">
+                        <h2 className="text-5xl md:text-8xl font-bold mb-8">HABLEMOS</h2>
+                        <p className="text-xl text-gray-400 mb-12 max-w-2xl mx-auto">¿Buscas un perfil Junior con hambre de aprender y sólida base técnica? Estoy disponible para nuevas oportunidades.</p>
+                        <a href="mailto:jordiblloz@gmail.com" className="inline-block group relative overflow-hidden rounded-full bg-white text-black px-12 py-6 text-xl font-bold hover:scale-105 transition-transform interactive">
+                            <span className="relative z-10 group-hover:text-white transition-colors">ENVIAR CORREO</span>
+                            <div className="absolute inset-0 bg-purple-600 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                        </a>
+                        <div className="mt-24 flex flex-wrap justify-center gap-8 md:gap-16 text-gray-500 uppercase tracking-widest text-sm font-bold">
+                            <a href="https://github.com/JBLOZ" target="_blank" className="hover:text-purple-400 transition-colors interactive">Github</a>
+                            <a href="https://linkedin.com/in/jbloz" target="_blank" className="hover:text-purple-400 transition-colors interactive">LinkedIn</a>
+                        </div>
+                    </div>
+                     <footer className="absolute bottom-6 w-full text-center text-gray-600 text-xs uppercase tracking-wider">
+                        &copy; 2025 Jordi Blasco Lozano. Alicante, España.
+                    </footer>
+                </section>
+            );
+        };
+
+        // --- Nueva Vista: Archivo de Proyectos ---
+        const ProjectArchive = ({ setView }) => {
+            useEffect(() => {
+                window.scrollTo(0, 0);
+            }, []);
+
+            return (
+                <motion.div 
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    className="min-h-screen py-32 px-6"
+                >
+                    <div className="container mx-auto">
+                        <div className="mb-16 text-center">
+                            <motion.div 
+                                initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+                                className="inline-block mb-6"
+                            >
+                                <button 
+                                    onClick={() => setView('home')}
+                                    className="text-purple-400 hover:text-white flex items-center gap-2 uppercase tracking-widest text-sm font-bold mb-8 mx-auto transition-colors"
+                                >
+                                    <i data-lucide="arrow-left" className="w-4 h-4"></i> Volver al Inicio
+                                </button>
+                            </motion.div>
+                            <h1 className="text-4xl md:text-6xl font-bold mb-6">ARCHIVO DE <span className="text-purple-500">PROYECTOS</span></h1>
+                            <p className="text-gray-400 max-w-2xl mx-auto">
+                                Una colección completa de mis trabajos académicos, experimentos personales y desarrollos profesionales.
+                            </p>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {ALL_PROJECTS.map((p, i) => (
+                                <ProjectCard key={i} index={i} {...p} dense={true} />
+                            ))}
+                        </div>
+                    </div>
+                </motion.div>
+            );
+        }
+
+        // --- Main App ---
+        const App = () => {
+            const [view, setView] = useState('home'); // 'home' | 'projects'
+
+            useEffect(() => {
+                if (typeof Lenis !== 'undefined') {
+                    const lenis = new Lenis({
+                        duration: 1.2,
+                        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+                        direction: 'vertical',
+                        smooth: true,
+                        smoothTouch: false,
+                    });
+                    function raf(time) {
+                        lenis.raf(time);
+                        requestAnimationFrame(raf);
+                    }
+                    requestAnimationFrame(raf);
+                    return () => lenis.destroy();
+                }
+            }, []);
+
+            useEffect(() => {
+                if (window.lucide) window.lucide.createIcons();
+            }, [view]);
+
+            return (
+                <>
+                    <CustomCursor />
+                    <Background3D />
+                    <Navbar view={view} setView={setView} />
+                    <main>
+                        <AnimatePresence mode="wait">
+                            {view === 'home' ? (
+                                <motion.div 
+                                    key="home"
+                                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                                >
+                                    <Hero />
+                                    <About />
+                                    <Skills />
+                                    <Experience />
+                                    <FeaturedProjects setView={setView} />
+                                    <Contact />
+                                </motion.div>
+                            ) : (
+                                <ProjectArchive key="projects" setView={setView} />
+                            )}
+                        </AnimatePresence>
+                    </main>
+                </>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>
