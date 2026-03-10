@@ -1,734 +1,1331 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jordi Blasco | Ingeniero IA & Developer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
-    <script src="https://unpkg.com/lenis@1.0.45/dist/lenis.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syncopate:wght@400;700&display=swap');
-        
-        :root {
-            --primary: #a855f7;
-            --secondary: #00f3ff;
-            --bg: #030305;
-            --glass: rgba(255, 255, 255, 0.05);
-        }
-
-        body {
-            margin: 0;
-            background-color: var(--bg);
-            color: white;
-            font-family: 'Space Grotesk', sans-serif;
-            overflow-x: hidden;
-            cursor: none;
-        }
-
-        h1, h2, h3, .brand {
-            font-family: 'Syncopate', sans-serif;
-        }
-
-        /* Custom Cursor */
-        .cursor-dot, .cursor-outline {
-            position: fixed;
-            top: 0;
-            left: 0;
-            transform: translate(-50%, -50%);
-            border-radius: 50%;
-            z-index: 9999;
-            pointer-events: none;
-        }
-        .cursor-dot { width: 8px; height: 8px; background-color: var(--primary); }
-        .cursor-outline {
-            width: 40px; height: 40px;
-            border: 1px solid var(--primary);
-            transition: width 0.2s, height 0.2s, background-color 0.2s;
-        }
-        body.hovering .cursor-outline {
-            width: 60px; height: 60px;
-            background-color: rgba(168, 85, 247, 0.1);
-            border-color: transparent;
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg); }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
-
-        canvas { position: fixed; top: 0; left: 0; z-index: -1; pointer-events: none; }
-
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .gradient-text {
-            background: linear-gradient(to right, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-    </style>
-</head>
-<body>
-    <div id="root"></div>
-
-    <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
-        const { motion, useScroll, useTransform, useSpring, useMotionValue, AnimatePresence } = window.Motion;
-
-        // --- DATA: TODOS LOS PROYECTOS ---
-        const ALL_PROJECTS = [
-            { 
-                title: "Infraestructura Cloud AWS", 
-                tags: ["AWS", "Docker", "EC2", "VPC"], 
-                desc: "Despliegue completo de infraestructura cloud incluyendo VPCs, balanceadores de carga (ALB), auto-scaling y buckets S3 para alta disponibilidad.",
-                img: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=800",
-                link: "https://github.com/JBLOZ/portfolio/tree/main/proyectos/aws",
-                featured: true
-            },
-            { 
-                title: "E-commerce con IA", 
-                tags: ["Python", "PyTorch", "Hugging Face"], 
-                desc: "Plataforma de comercio electrónico capaz de buscar productos mediante texto e imágenes utilizando modelos pre-entrenados de Computer Vision.",
-                img: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&q=80&w=800", 
-                link: "https://github.com/JBLOZ/py-ecommerce-software-proyect",
-                featured: true
-            },
-            { 
-                title: "Bot de Trading & Sentimiento", 
-                tags: ["n8n", "LLMs", "Telegram API"], 
-                desc: "Bot autónomo que analiza noticias financieras y sentimiento de mercado usando LLMs para generar señales de compra/venta en tiempo real.",
-                img: "https://images.unsplash.com/photo-1642543492481-44e81e3914a7?auto=format&fit=crop&q=80&w=800",
-                link: "https://github.com/JBLOZ/portfolio/tree/main/proyectos/n8n/p_01",
-                featured: true
-            },
-            {
-                title: "Detección Médica con ResNet",
-                tags: ["Matlab", "Deep Learning", "CNN"],
-                desc: "Implementación de ResNet-50 para la detección de cáncer de piel con una precisión del 80-85% en diagnósticos.",
-                img: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=800",
-                link: "https://github.com/JBLOZ/heart-attack-fuzzy-system",
-                featured: true
-            },
-            // --- Proyectos del Portfolio Antiguo ---
-            {
-                title: "Sistema Fuzzy Robot 2D",
-                tags: ["Python", "Fuzzy Logic", "Robotics"],
-                desc: "Sistema de lógica difusa para control de navegación autónoma de un robot 2D.",
-                img: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=80&w=800",
-                link: "https://github.com/JBLOZ/ROBOT-fuzzy-and-basiclogic",
-                featured: false
-            },
-            {
-                title: "Clasificación Zoo Dataset",
-                tags: ["Python", "Scikit-learn", "ML"],
-                desc: "Comparativa de algoritmos (Bayes, k-NN) para clasificación multiclase de especies animales.",
-                img: "https://images.unsplash.com/photo-1474511320723-9a56873867b5?auto=format&fit=crop&q=80&w=800",
-                link: "https://github.com/JBLOZ/portfolio/tree/main/proyectos/aprendizaje_automatico/p_02",
-                featured: false
-            },
-            {
-                title: "Sistema Experto Cardíaco",
-                tags: ["Python", "Expert Systems", "Healthcare"],
-                desc: "Sistema experto difuso para estimar riesgo de ataque cardíaco basado en variables médicas.",
-                img: "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&q=80&w=800",
-                link: "https://github.com/JBLOZ/heart-attack-fuzzy-system",
-                featured: false
-            },
-            {
-                title: "Pacman IA con CNN",
-                tags: ["Python", "CNN", "Game AI"],
-                desc: "Agente inteligente para Pacman usando redes convolucionales y poda Alfa-Beta.",
-                img: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=800",
-                link: "https://github.com/JBLOZ/PACMAN-CNN-Alphabeta",
-                featured: false
-            },
-            {
-                title: "Videojuego Unreal Engine 4",
-                tags: ["UE4", "C++", "Blueprints"],
-                desc: "Desarrollo completo de un videojuego 3D con físicas y sistema de niveles.",
-                img: "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?auto=format&fit=crop&q=80&w=800",
-                link: "https://www.youtube.com/watch?v=VaXI3NCUENQ",
-                featured: false
-            },
-            {
-                title: "Graph Matching",
-                tags: ["Python", "NetworkX", "Graphs"],
-                desc: "Algoritmos de optimización para encontrar similitudes estructurales entre grafos.",
-                img: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&q=80&w=800",
-                link: "https://github.com/JBLOZ/graph_matching",
-                featured: false
-            },
-            {
-                title: "Clustering & Data Analysis",
-                tags: ["Python", "Pandas", "K-Means"],
-                desc: "Análisis exploratorio y segmentación de datos usando algoritmos no supervisados.",
-                img: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=800",
-                link: "https://github.com/JBLOZ/basic-clustering-and-DA",
-                featured: false
-            },
-            {
-                title: "Calendario en C++",
-                tags: ["C++", "OOP", "Algorithms"],
-                desc: "Implementación desde cero de un sistema de gestión de fechas y eventos.",
-                img: "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&q=80&w=800",
-                link: "https://github.com/JBLOZ/IA/tree/main/2doAnyo/1erCuatri/progAvanzada/practica3",
-                featured: false
-            },
-            {
-                title: "Octree con PyVista",
-                tags: ["Python", "3D Viz", "Spatial"],
-                desc: "Visualización interactiva de estructuras de datos espaciales Octree.",
-                img: "https://images.unsplash.com/photo-1470075801209-17f9ec0cada6?auto=format&fit=crop&q=80&w=800",
-                link: "https://github.com/JBLOZ/Oc-tree-y-PyVista",
-                featured: false
-            },
-             {
-                title: "Repositorio Universitario",
-                tags: ["All", "University", "Practice"],
-                desc: "Colección completa de prácticas de carrera: Algoritmos, IA, Estructuras de datos.",
-                img: "https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?auto=format&fit=crop&q=80&w=800",
-                link: "https://github.com/JBLOZ/IA",
-                featured: false
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Jordi Blasco | Portfolio</title>
+        <meta
+            name="description"
+            content="Portfolio de Jordi Blasco Lozano, estudiante de Ingeniería en Inteligencia Artificial con experiencia en machine learning, cloud y desarrollo de software."
+        />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --bg: #111111;
+                --surface: #171717;
+                --surface-2: #1f1f1f;
+                --line: #2a2a2a;
+                --line-soft: #232323;
+                --text: #f2efe8;
+                --muted: #b7afa3;
+                --muted-2: #8c867c;
+                --accent: #c57f3a;
+                --accent-soft: #e0b17d;
+                --success: #8ea06c;
+                --max-width: 1180px;
+                --radius: 10px;
+                --shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
             }
-        ];
 
-        // --- 1. Cursor Personalizado ---
-        const CustomCursor = () => {
-            const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-            const [outlinePos, setOutlinePos] = useState({ x: 0, y: 0 });
-            const requestRef = useRef();
-            const previousTimeRef = useRef();
+            * {
+                box-sizing: border-box;
+            }
+            html {
+                scroll-behavior: smooth;
+            }
 
-            useEffect(() => {
-                const moveCursor = (e) => {
-                    setMousePos({ x: e.clientX, y: e.clientY });
-                    const target = e.target;
-                    if (target.closest('a') || target.closest('button') || target.closest('.interactive')) {
-                        document.body.classList.add('hovering');
-                    } else {
-                        document.body.classList.remove('hovering');
-                    }
-                };
-                window.addEventListener('mousemove', moveCursor);
-                
-                const animateOutline = (time) => {
-                    if (previousTimeRef.current !== undefined) {
-                        setOutlinePos(prev => ({
-                            x: prev.x + (mousePos.x - prev.x) * 0.15,
-                            y: prev.y + (mousePos.y - prev.y) * 0.15
-                        }));
-                    }
-                    previousTimeRef.current = time;
-                    requestRef.current = requestAnimationFrame(animateOutline);
-                };
-                requestRef.current = requestAnimationFrame(animateOutline);
+            body {
+                margin: 0;
+                font-family: "Manrope", sans-serif;
+                background: var(--bg);
+                color: var(--text);
+                line-height: 1.55;
+            }
 
-                return () => {
-                    window.removeEventListener('mousemove', moveCursor);
-                    cancelAnimationFrame(requestRef.current);
-                };
-            }, [mousePos]);
+            a {
+                color: inherit;
+                text-decoration: none;
+            }
 
-            return (
-                <>
-                    <div className="cursor-outline hidden md:block" style={{ left: `${outlinePos.x}px`, top: `${outlinePos.y}px` }} />
-                    <div className="cursor-dot hidden md:block" style={{ left: `${mousePos.x}px`, top: `${mousePos.y}px` }} />
-                </>
-            );
-        };
+            img {
+                max-width: 100%;
+                display: block;
+            }
 
-        // --- 2. Fondo 3D ---
-        const Background3D = () => {
-            const mountRef = useRef(null);
+            .container {
+                width: min(var(--max-width), calc(100% - 40px));
+                margin: 0 auto;
+            }
 
-            useEffect(() => {
-                if (!mountRef.current) return;
-                const container = mountRef.current;
-                const scene = new THREE.Scene();
-                const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-                const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-                
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                container.appendChild(renderer.domElement);
+            .site-header {
+                position: sticky;
+                top: 0;
+                z-index: 20;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+                background: rgba(17, 17, 17, 0.92);
+                backdrop-filter: blur(8px);
+            }
 
-                const particlesGeometry = new THREE.BufferGeometry();
-                const particlesCount = 1200;
-                const posArray = new Float32Array(particlesCount * 3);
-                for(let i = 0; i < particlesCount * 3; i++) posArray[i] = (Math.random() - 0.5) * 18;
-                particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-                const material = new THREE.PointsMaterial({ size: 0.025, color: 0xa855f7, transparent: true, opacity: 0.6 });
-                const particlesMesh = new THREE.Points(particlesGeometry, material);
-                scene.add(particlesMesh);
+            .header-row {
+                min-height: 72px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 24px;
+            }
 
-                const geometry = new THREE.TorusKnotGeometry(3, 0.8, 100, 16);
-                const wireframeMaterial = new THREE.MeshBasicMaterial({ color: 0x00f3ff, wireframe: true, transparent: true, opacity: 0.08 });
-                const torusKnot = new THREE.Mesh(geometry, wireframeMaterial);
-                scene.add(torusKnot);
+            .brand {
+                font-size: 1.7rem;
+                font-weight: 800;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+            }
 
-                camera.position.z = 6;
+            .brand span {
+                color: var(--accent-soft);
+            }
 
-                let mouseX = 0, mouseY = 0;
-                const onMove = (e) => { mouseX = e.clientX; mouseY = e.clientY; };
-                document.addEventListener('mousemove', onMove);
+            .nav {
+                display: flex;
+                gap: 22px;
+                align-items: center;
+            }
 
-                const clock = new THREE.Clock();
-                let animationId;
+            .nav a {
+                font-size: 0.93rem;
+                color: var(--muted);
+                transition: color 140ms ease;
+            }
 
-                const animate = () => {
-                    const t = clock.getElapsedTime();
-                    particlesMesh.rotation.y = t * 0.03 + mouseX * 0.00005;
-                    particlesMesh.rotation.x = mouseY * 0.00005;
-                    torusKnot.rotation.x = t * 0.05;
-                    torusKnot.rotation.y = t * 0.08;
-                    renderer.render(scene, camera);
-                    animationId = requestAnimationFrame(animate);
-                };
-                animate();
+            .nav a:hover,
+            .nav a:focus-visible {
+                color: var(--text);
+            }
 
-                const handleResize = () => {
-                    camera.aspect = window.innerWidth / window.innerHeight;
-                    camera.updateProjectionMatrix();
-                    renderer.setSize(window.innerWidth, window.innerHeight);
-                };
-                window.addEventListener('resize', handleResize);
+            .header-actions {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
 
-                return () => {
-                    window.removeEventListener('resize', handleResize);
-                    document.removeEventListener('mousemove', onMove);
-                    cancelAnimationFrame(animationId);
-                    if (container && renderer.domElement) container.removeChild(renderer.domElement);
-                    geometry.dispose(); material.dispose(); renderer.dispose();
-                };
-            }, []);
-            return <div ref={mountRef} style={{ position: 'fixed', top: 0, left: 0, zIndex: -1 }} />;
-        };
+            .button,
+            .button-secondary {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                min-height: 42px;
+                padding: 0 16px;
+                border-radius: 8px;
+                border: 1px solid transparent;
+                font-size: 0.95rem;
+                font-weight: 700;
+                transition:
+                    background-color 160ms ease,
+                    border-color 160ms ease,
+                    color 160ms ease;
+                cursor: pointer;
+            }
 
-        // --- 3. Navegación ---
-        const Navbar = ({ view, setView }) => {
-            const [isOpen, setIsOpen] = useState(false);
-            const links = ['Sobre Mí', 'Skills', 'Proyectos', 'Experiencia', 'Contacto'];
-            
-            const handleNav = (item) => {
-                if (view !== 'home') {
-                    setView('home');
-                    // Wait for render then scroll
-                    setTimeout(() => {
-                        const el = document.getElementById(item.toLowerCase().replace(' ', '-'));
-                        if(el) el.scrollIntoView({ behavior: 'smooth' });
-                    }, 100);
-                } else {
-                    const el = document.getElementById(item.toLowerCase().replace(' ', '-'));
-                    if(el) el.scrollIntoView({ behavior: 'smooth' });
+            .button {
+                background: var(--text);
+                color: #101010;
+            }
+
+            .button:hover,
+            .button:focus-visible {
+                background: #ffffff;
+            }
+
+            .button-secondary {
+                background: transparent;
+                color: var(--text);
+                border-color: var(--line);
+            }
+
+            .button-secondary:hover,
+            .button-secondary:focus-visible {
+                border-color: #3a3a3a;
+                background: var(--surface);
+            }
+
+            main section {
+                padding: 72px 0;
+                scroll-margin-top: 84px;
+            }
+
+            .hero {
+                padding-top: 64px;
+                padding-bottom: 56px;
+            }
+
+            .hero-grid {
+                display: grid;
+                grid-template-columns: 1.45fr 0.95fr;
+                gap: 36px;
+                align-items: stretch;
+            }
+
+            .intro,
+            .panel,
+            .project-card,
+            .timeline-item,
+            .contact-card {
+                background: var(--surface);
+                border: 1px solid var(--line-soft);
+                border-radius: var(--radius);
+                box-shadow: var(--shadow);
+            }
+
+            .intro {
+                padding: 34px;
+                min-height: 100%;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+
+            .mono {
+                font-family: "IBM Plex Mono", monospace;
+                font-size: 0.82rem;
+                color: var(--muted-2);
+            }
+
+            h1,
+            h2,
+            h3,
+            p {
+                margin-top: 0;
+            }
+
+            h1 {
+                font-size: clamp(2.4rem, 4vw, 4.6rem);
+                line-height: 0.98;
+                letter-spacing: -0.04em;
+                margin-bottom: 20px;
+                max-width: 10ch;
+            }
+
+            .lead {
+                max-width: 62ch;
+                font-size: 1.05rem;
+                color: var(--muted);
+                margin-bottom: 28px;
+            }
+
+            .hero-actions,
+            .inline-links,
+            .social-links,
+            .contact-actions {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 12px;
+            }
+
+            .quick-facts {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 12px;
+                margin-top: 26px;
+            }
+
+            .fact {
+                padding: 14px;
+                border: 1px solid var(--line);
+                border-radius: 8px;
+                background: #141414;
+            }
+
+            .fact strong,
+            .stat strong {
+                display: block;
+                font-size: 1.02rem;
+                margin-bottom: 4px;
+            }
+
+            .fact span,
+            .stat span,
+            .project-meta,
+            .section-copy,
+            .timeline-copy,
+            .project-description,
+            .contact-copy {
+                color: var(--muted);
+            }
+
+            .side-column {
+                display: grid;
+                gap: 16px;
+            }
+
+            .profile-card {
+                padding: 18px;
+                display: grid;
+                gap: 16px;
+            }
+
+            .profile-card img {
+                width: 100%;
+                aspect-ratio: 1 / 1;
+                object-fit: cover;
+                border-radius: 8px;
+                border: 1px solid var(--line);
+            }
+
+            .profile-meta {
+                display: grid;
+                gap: 10px;
+            }
+
+            .meta-row,
+            .contact-list li {
+                display: flex;
+                justify-content: space-between;
+                gap: 16px;
+                padding-top: 10px;
+                border-top: 1px solid var(--line);
+                font-size: 0.94rem;
+            }
+
+            .stats-panel {
+                padding: 18px;
+            }
+
+            .stats-grid {
+                display: grid;
+                gap: 12px;
+            }
+
+            .stat {
+                padding: 14px;
+                border-radius: 8px;
+                border: 1px solid var(--line);
+                background: #141414;
+            }
+
+            .section-head {
+                display: grid;
+                grid-template-columns: 1fr auto;
+                gap: 24px;
+                align-items: end;
+                margin-bottom: 24px;
+            }
+
+            .section-head h2 {
+                margin-bottom: 8px;
+                font-size: clamp(1.65rem, 2.5vw, 2.5rem);
+                letter-spacing: -0.03em;
+            }
+
+            .section-copy {
+                max-width: 62ch;
+            }
+
+            .about-grid,
+            .experience-grid,
+            .education-grid,
+            .contact-grid {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 18px;
+            }
+
+            .panel {
+                padding: 24px;
+            }
+
+            .panel h3,
+            .project-card h3,
+            .timeline-item h3,
+            .contact-card h3 {
+                margin-bottom: 10px;
+                font-size: 1.16rem;
+                letter-spacing: -0.02em;
+            }
+
+            .skill-groups {
+                display: grid;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+                gap: 14px;
+            }
+
+            .skill-group {
+                padding: 18px;
+                border: 1px solid var(--line-soft);
+                border-radius: 10px;
+                background: var(--surface);
+            }
+
+            .skill-group ul,
+            .contact-list {
+                margin: 0;
+                padding: 0;
+                list-style: none;
+            }
+
+            .skill-group li {
+                padding: 9px 0;
+                border-top: 1px solid var(--line);
+                color: var(--muted);
+                font-size: 0.94rem;
+            }
+
+            .skill-group li:first-child {
+                border-top: 0;
+                padding-top: 0;
+            }
+
+            .timeline {
+                display: grid;
+                gap: 16px;
+            }
+
+            .timeline-item {
+                padding: 22px;
+            }
+
+            .timeline-top,
+            .project-top {
+                display: flex;
+                justify-content: space-between;
+                gap: 16px;
+                align-items: start;
+                margin-bottom: 10px;
+            }
+
+            .timeline-date,
+            .project-year {
+                color: var(--accent-soft);
+                font-size: 0.84rem;
+                font-family: "IBM Plex Mono", monospace;
+                white-space: nowrap;
+            }
+
+            .projects-toolbar {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: space-between;
+                gap: 16px;
+                margin-bottom: 18px;
+            }
+
+            .filter-group {
+                display: flex;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+
+            .filter-button {
+                min-height: 38px;
+                padding: 0 14px;
+                border: 1px solid var(--line);
+                border-radius: 8px;
+                background: transparent;
+                color: var(--muted);
+                font: inherit;
+                cursor: pointer;
+                transition:
+                    border-color 140ms ease,
+                    color 140ms ease,
+                    background-color 140ms ease;
+            }
+
+            .filter-button.active {
+                color: var(--text);
+                background: #202020;
+                border-color: #3b3b3b;
+            }
+
+            .projects-grid {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 16px;
+            }
+
+            .project-card {
+                overflow: hidden;
+            }
+
+            .project-card img {
+                width: 100%;
+                aspect-ratio: 16 / 9;
+                object-fit: cover;
+                border-bottom: 1px solid var(--line-soft);
+                filter: saturate(0.85);
+            }
+
+            .project-body {
+                padding: 18px;
+            }
+
+            .project-description {
+                margin-bottom: 14px;
+                font-size: 0.96rem;
+            }
+
+            .tag-list {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-bottom: 16px;
+            }
+
+            .tag {
+                padding: 5px 8px;
+                border-radius: 6px;
+                border: 1px solid var(--line);
+                color: var(--muted);
+                font-size: 0.8rem;
+                background: #151515;
+            }
+
+            .project-links {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 12px;
+                padding-top: 14px;
+                border-top: 1px solid var(--line);
+            }
+
+            .text-link {
+                color: var(--text);
+                font-weight: 700;
+            }
+
+            .text-link:hover,
+            .text-link:focus-visible {
+                color: var(--accent-soft);
+            }
+
+            .status {
+                color: var(--success);
+                font-size: 0.85rem;
+            }
+
+            .contact-card {
+                padding: 24px;
+            }
+
+            .contact-list li:first-child {
+                border-top: 0;
+                padding-top: 0;
+            }
+
+            .site-footer {
+                border-top: 1px solid rgba(255, 255, 255, 0.06);
+                padding: 24px 0 40px;
+                color: var(--muted-2);
+                font-size: 0.9rem;
+            }
+
+            .footer-row {
+                display: flex;
+                justify-content: space-between;
+                gap: 20px;
+                flex-wrap: wrap;
+            }
+
+            .menu-toggle {
+                display: none;
+                min-height: 40px;
+                min-width: 40px;
+                border-radius: 8px;
+                border: 1px solid var(--line);
+                background: transparent;
+                color: var(--text);
+                font-size: 1.1rem;
+                cursor: pointer;
+            }
+
+            @media (max-width: 980px) {
+                .hero-grid,
+                .about-grid,
+                .experience-grid,
+                .education-grid,
+                .contact-grid,
+                .projects-grid,
+                .skill-groups {
+                    grid-template-columns: 1fr;
                 }
-                setIsOpen(false);
+
+                .quick-facts {
+                    grid-template-columns: 1fr;
+                }
+
+                .section-head,
+                .projects-toolbar,
+                .timeline-top,
+                .project-top,
+                .footer-row {
+                    grid-template-columns: 1fr;
+                    display: grid;
+                }
+
+                .header-row {
+                    align-items: flex-start;
+                    padding: 14px 0;
+                }
+
+                .menu-toggle {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .nav,
+                .header-actions {
+                    display: none;
+                }
+
+                .site-header.open .nav,
+                .site-header.open .header-actions {
+                    display: flex;
+                    width: 100%;
+                    flex-direction: column;
+                    align-items: stretch;
+                    gap: 10px;
+                }
+
+                .site-header.open .header-row {
+                    display: grid;
+                    grid-template-columns: 1fr auto;
+                }
+
+                .site-header.open .nav {
+                    grid-column: 1 / -1;
+                    padding-top: 8px;
+                }
+
+                .site-header.open .nav a,
+                .site-header.open .header-actions a {
+                    padding: 10px 0;
+                }
+
+                .site-header.open .header-actions {
+                    grid-column: 1 / -1;
+                }
             }
 
-            return (
-                <nav className="fixed top-0 w-full z-50 px-6 py-6 flex justify-between items-center mix-blend-difference text-white">
-                    <div 
-                        className="brand text-xl md:text-2xl font-bold tracking-tighter cursor-pointer interactive"
-                        onClick={() => setView('home')}
-                    >
-                        JORDI<span className="text-purple-400">.</span>DEV
-                    </div>
-                    
-                    {view === 'home' ? (
-                        <div className="hidden md:flex gap-8 font-medium text-sm tracking-widest">
-                            {links.map((item) => (
-                                <a 
-                                    key={item} 
-                                    href={`#${item.toLowerCase().replace(' ', '-')}`} 
-                                    className="hover:text-purple-400 transition-colors interactive relative group uppercase"
-                                >
-                                    {item}
-                                    <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-purple-400 transition-all group-hover:w-full"></span>
-                                </a>
-                            ))}
-                        </div>
-                    ) : (
-                        <button 
-                            onClick={() => setView('home')}
-                            className="hidden md:flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:text-purple-400 transition-colors interactive"
-                        >
-                            <i data-lucide="arrow-left" className="w-4 h-4"></i> Volver al Inicio
-                        </button>
-                    )}
+            @media (max-width: 640px) {
+                .container {
+                    width: min(var(--max-width), calc(100% - 24px));
+                }
 
-                    <div className="md:hidden interactive" onClick={() => setIsOpen(!isOpen)}>
-                        <div className="space-y-2 cursor-pointer">
-                            <div className={`w-8 h-0.5 bg-white transition-transform ${isOpen ? 'rotate-45 translate-y-2.5' : ''}`}></div>
-                            <div className={`w-8 h-0.5 bg-white transition-opacity ${isOpen ? 'opacity-0' : ''}`}></div>
-                            <div className={`w-8 h-0.5 bg-white transition-transform ${isOpen ? '-rotate-45 -translate-y-2.5' : ''}`}></div>
-                        </div>
-                    </div>
+                main section {
+                    padding: 56px 0;
+                }
 
-                    {isOpen && (
-                        <motion.div 
-                            initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
-                            className="absolute top-24 right-6 w-64 glass-panel p-6 rounded-xl md:hidden flex flex-col gap-4 z-50"
-                        >
-                            {view !== 'home' && (
-                                 <button onClick={() => { setView('home'); setIsOpen(false); }} className="text-lg hover:text-purple-400 uppercase text-left font-bold text-purple-300 mb-4 border-b border-white/10 pb-4">
-                                    ← Volver
-                                </button>
-                            )}
-                            {links.map((item) => (
-                                <a key={item} onClick={() => handleNav(item)} className="text-lg hover:text-purple-400 uppercase cursor-pointer">
-                                    {item}
-                                </a>
-                            ))}
-                        </motion.div>
-                    )}
+                .hero {
+                    padding-top: 40px;
+                }
+
+                .intro,
+                .panel,
+                .project-card .project-body,
+                .timeline-item,
+                .contact-card,
+                .profile-card,
+                .stats-panel,
+                .skill-group {
+                    padding: 18px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <header class="site-header" id="siteHeader">
+            <div class="container header-row">
+                <a class="brand" href="#top">Jordi <span>Blasco</span></a>
+                <button
+                    class="menu-toggle"
+                    id="menuToggle"
+                    aria-label="Abrir menú"
+                >
+                    ☰
+                </button>
+                <nav class="nav" aria-label="Principal">
+                    <a href="#sobre-mi">Sobre mí</a>
+                    <a href="#stack">Stack</a>
+                    <a href="#experiencia">Experiencia</a>
+                    <a href="#proyectos">Proyectos</a>
+                    <a href="#contacto">Contacto</a>
                 </nav>
-            );
-        };
+                <div class="header-actions">
+                    <a
+                        class="button-secondary"
+                        href="https://jbloz.github.io/portfolio/cv/cv_es.pdf"
+                        target="_blank"
+                        rel="noreferrer"
+                        >CV ES</a
+                    >
+                    <a
+                        class="button-secondary"
+                        href="https://jbloz.github.io/portfolio/cv/cv_en.pdf"
+                        target="_blank"
+                        rel="noreferrer"
+                        >CV EN</a
+                    >
+                    <a class="button" href="mailto:jordiblloz@gmail.com"
+                        >Contactar</a
+                    >
+                </div>
+            </div>
+        </header>
 
-        // --- Componentes de Sección Home ---
-        const Hero = () => {
-            const { scrollY } = useScroll();
-            const y1 = useTransform(scrollY, [0, 500], [0, 200]);
-            const opacity = useTransform(scrollY, [0, 300], [1, 0]);
-
-            return (
-                <section className="h-screen flex flex-col justify-center items-center relative px-4 text-center">
-                    <motion.div style={{ y: y1, opacity }} className="z-10 max-w-5xl">
-                        <motion.div 
-                            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-                            className="inline-block mb-6 px-4 py-1 border border-purple-500/30 rounded-full bg-purple-500/10"
-                        >
-                            <span className="text-purple-300 text-xs md:text-sm tracking-[0.3em] uppercase font-bold">
-                                Ingeniero en IA & Desarrollador
-                            </span>
-                        </motion.div>
-
-                        <motion.h1 
-                            initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
-                            className="text-5xl md:text-8xl font-bold leading-tight mb-8"
-                        >
-                            JORDI <br />
-                            <span className="stroke-text text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-500">BLASCO</span>
-                        </motion.h1>
-
-                        <motion.p
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
-                            className="text-gray-400 max-w-2xl mx-auto text-lg mb-8 leading-relaxed"
-                        >
-                            Estudiante de 3er año especializado en <span className="text-white">Machine Learning</span>, <span className="text-white">Deep Learning</span> y arquitecturas Cloud. Transformando teoría en soluciones reales.
-                        </motion.p>
-
-                        <motion.div
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-                            className="flex flex-col md:flex-row justify-center gap-4"
-                        >
-                            <a href="#proyectos" className="interactive px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-full transition-all duration-300 tracking-widest text-sm font-bold uppercase shadow-[0_0_20px_rgba(168,85,247,0.3)]">
-                                Ver Proyectos
-                            </a>
-                            <a href="https://github.com/JBLOZ" target="_blank" className="interactive px-8 py-4 border border-gray-600 hover:border-white text-white rounded-full transition-all duration-300 tracking-widest text-sm font-bold uppercase">
-                                GitHub
-                            </a>
-                        </motion.div>
-                    </motion.div>
-                    <motion.div style={{ opacity }} className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
-                        <span className="text-[10px] text-gray-500 uppercase tracking-widest">Scroll</span>
-                        <div className="w-[1px] h-12 bg-gradient-to-b from-purple-500 to-transparent"></div>
-                    </motion.div>
-                </section>
-            );
-        };
-
-        const About = () => {
-            return (
-                <section id="sobre-mí" className="min-h-screen flex items-center justify-center py-24 relative">
-                    <div className="container mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
-                        <motion.div 
-                            initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}
-                            className="relative order-2 md:order-1"
-                        >
-                            <div className="relative group rounded-full overflow-hidden aspect-square max-w-[400px] mx-auto select-none border-4 border-purple-500/20">
-                                <img src="https://avatars.githubusercontent.com/u/123325702?v=4" alt="Jordi Blasco" className="w-full h-full object-cover pointer-events-none" />
-                            </div>
-                        </motion.div>
-                        <div className="order-1 md:order-2">
-                            <motion.h2 initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-4xl md:text-6xl font-bold mb-8 leading-tight">
-                                SOBRE <br /> <span className="gradient-text">MÍ</span>
-                            </motion.h2>
-                            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }} className="text-gray-400 text-lg space-y-6 leading-relaxed">
-                                <p>Soy Jordi, estudiante de 3er año de Ingeniería en Inteligencia Artificial en la Universidad de Alicante. Apasionado por el Machine Learning, el desarrollo de aplicaciones inteligentes y la infraestructura cloud.</p>
-                                <p>Mi objetivo es aplicar la inteligencia artificial para resolver problemas reales, combinando una sólida formación teórica con experiencia práctica en proyectos universitarios y profesionales. Actualmente trabajo como Investigador en Aprendizaje por Refuerzo en Outlier.</p>
-                            </motion.div>
-                            <div className="mt-8 flex gap-4">
-                                <a href="https://jbloz.github.io/portfolio/cv/cv_es.pdf" target="_blank" className="interactive text-purple-400 border-b border-purple-400 hover:text-white hover:border-white transition-colors pb-1">Descargar CV (ES)</a>
-                                <a href="https://jbloz.github.io/portfolio/cv/cv_en.pdf" target="_blank" className="interactive text-gray-500 border-b border-gray-500 hover:text-white hover:border-white transition-colors pb-1">Download CV (EN)</a>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            );
-        };
-
-        const Skills = () => {
-            const skillSets = [
-                { category: "AI & Data Science", skills: ["Python", "PyTorch", "Hugging Face", "Scikit-learn", "Pandas", "NumPy", "Matlab"] },
-                { category: "Cloud & DevOps", skills: ["AWS (EC2, S3, VPC)", "Docker", "Git", "Linux", "CI/CD"] },
-                { category: "Development", skills: ["JavaScript", "C++", "React", "n8n", "SQL", "NoSQL", "REST APIs"] },
-                { category: "Soft Skills", skills: ["Investigación", "Trabajo en Equipo", "Resolución de Problemas", "Inglés (B2 Oxford)"] }
-            ];
-            return (
-                <section id="skills" className="py-24 px-6">
-                    <div className="container mx-auto">
-                        <motion.h2 initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-4xl md:text-6xl font-bold mb-16 text-center">
-                            STACK <span className="text-gray-700">TECNOLÓGICO</span>
-                        </motion.h2>
-                        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {skillSets.map((s, i) => (
-                                <motion.div key={i} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="glass-panel p-8 rounded-2xl hover:bg-white/5 transition-colors">
-                                    <h3 className="text-xl font-bold mb-4 text-purple-300 uppercase tracking-wider">{s.category}</h3>
-                                    <div className="flex flex-wrap gap-2">
-                                        {s.skills.map(skill => <span key={skill} className="px-3 py-1 bg-white/5 rounded-full text-sm text-gray-300 border border-white/10">{skill}</span>)}
-                                    </div>
-                                </motion.div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-            );
-        };
-
-        const Experience = () => {
-             return (
-                <section id="experiencia" className="py-24 px-6 bg-gradient-to-b from-transparent to-black/50">
-                    <div className="container mx-auto max-w-4xl">
-                        <h2 className="text-4xl md:text-6xl font-bold mb-16 text-center">EXPERIENCIA</h2>
-                        <div className="relative border-l border-gray-800 ml-4 md:ml-0 pl-8 md:pl-12 space-y-16">
-                            <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="relative">
-                                <span className="absolute -left-[41px] md:-left-[57px] top-2 w-5 h-5 rounded-full bg-purple-500 border-4 border-[#030305]"></span>
-                                <div className="mb-2 flex flex-col md:flex-row md:items-center md:justify-between">
-                                    <h3 className="text-2xl font-bold text-white">Investigador de Aprendizaje por Refuerzo</h3>
-                                    <span className="text-purple-400 font-mono text-sm">2024 - Actualidad</span>
-                                </div>
-                                <div className="text-lg text-gray-400 mb-4">Outlier AI</div>
-                                <p className="text-gray-400 leading-relaxed">Contribuyo a proyectos de RLHF (Reinforcement Learning from Human Feedback) para optimizar modelos de IA generativa, evaluando respuestas y proporcionando datos de alta calidad para el entrenamiento.</p>
-                            </motion.div>
-                        </div>
-                    </div>
-                </section>
-            )
-        }
-
-        const Education = () => {
-             return (
-                <section id="formación" className="py-24 px-6">
-                    <div className="container mx-auto max-w-4xl">
-                        <h2 className="text-4xl md:text-6xl font-bold mb-16 text-center">FORMACIÓN <span className="gradient-text">ACADÉMICA</span></h2>
-                        <div className="relative border-l border-gray-800 ml-4 md:ml-0 pl-8 md:pl-12 space-y-16">
-                            <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="relative">
-                                <span className="absolute -left-[41px] md:-left-[57px] top-2 w-5 h-5 rounded-full bg-purple-500 border-4 border-[#030305]"></span>
-                                <div className="mb-2 flex flex-col md:flex-row md:items-center md:justify-between">
-                                    <h3 className="text-2xl font-bold text-white">Grado en Ingeniería en Inteligencia Artificial</h3>
-                                    <span className="text-purple-400 font-mono text-sm">2022 - Actualidad</span>
-                                </div>
-                                <div className="text-lg text-gray-400 mb-4">Universidad de Alicante</div>
-                                <p className="text-gray-400 leading-relaxed">3er año, 100% de asignaturas superadas. Especialización en Machine Learning, Deep Learning, algoritmos de IA y desarrollo de aplicaciones inteligentes.</p>
-                            </motion.div>
-
-                            <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }} className="relative">
-                                <span className="absolute -left-[41px] md:-left-[57px] top-2 w-5 h-5 rounded-full bg-purple-500 border-4 border-[#030305]"></span>
-                                <div className="mb-2 flex flex-col md:flex-row md:items-center md:justify-between">
-                                    <h3 className="text-2xl font-bold text-white">Oxford Test of English - Nivel B2</h3>
-                                    <span className="text-purple-400 font-mono text-sm">Mayo 2024</span>
-                                </div>
-                                <p className="text-gray-400 leading-relaxed">Certificación oficial de nivel B2 en inglés (ref 263339).</p>
-                            </motion.div>
-                        </div>
-                    </div>
-                </section>
-            )
-        }
-
-        const ProjectCard = ({ title, tags, desc, img, link, index, dense }) => {
-            return (
-                <motion.div 
-                    initial={{ opacity: 0, y: 50 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.05 }}
-                    className={`group relative rounded-3xl overflow-hidden bg-[#0a0a0a] border border-white/10 hover:border-purple-500/50 transition-all duration-500 ${dense ? 'h-[450px]' : 'h-[500px]'}`}
-                >
-                    <div className="h-[50%] overflow-hidden relative">
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] to-transparent z-10"></div>
-                        <img src={img} alt={title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-70" />
-                    </div>
-                    <div className="p-6 md:p-8 relative z-20 -mt-6 flex flex-col h-[50%] justify-between">
+        <main id="top">
+            <section class="hero">
+                <div class="container hero-grid">
+                    <div class="intro">
                         <div>
-                            <div className="flex gap-2 mb-3 flex-wrap">
-                                {tags.slice(0,3).map(t => (
-                                    <span key={t} className="text-[10px] font-bold uppercase tracking-wider py-1 px-2 bg-purple-500/20 text-purple-300 rounded">{t}</span>
-                                ))}
-                            </div>
-                            <h3 className={`font-bold mb-2 group-hover:text-purple-400 transition-colors ${dense ? 'text-xl' : 'text-2xl'}`}>{title}</h3>
-                            <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">{desc}</p>
-                        </div>
-                        <a href={link} target="_blank" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest hover:text-purple-400 transition-colors interactive mt-4">
-                            Ver en GitHub <i data-lucide="arrow-right" className="w-4 h-4"></i>
-                        </a>
-                    </div>
-                </motion.div>
-            )
-        }
-
-        const FeaturedProjects = ({ setView }) => {
-            const featured = ALL_PROJECTS.filter(p => p.featured);
-            return (
-                <section id="proyectos" className="py-24 px-6">
-                     <div className="container mx-auto">
-                        <div className="mb-16">
-                            <h2 className="text-4xl md:text-7xl font-bold">PROYECTOS <br /> <span className="gradient-text">DESTACADOS</span></h2>
-                        </div>
-                        <div className="grid md:grid-cols-2 gap-8">
-                            {featured.map((p, i) => <ProjectCard key={i} index={i} {...p} />)}
-                        </div>
-                        <div className="mt-16 text-center">
-                            <button 
-                                onClick={() => setView('projects')}
-                                className="inline-block border border-gray-700 hover:border-purple-500 text-gray-400 hover:text-white px-12 py-4 rounded-full transition-all uppercase text-sm font-bold tracking-widest interactive hover:bg-purple-500/10"
-                            >
-                                Ver Más Proyectos ({ALL_PROJECTS.length})
-                            </button>
-                        </div>
-                    </div>
-                </section>
-            )
-        }
-
-        const Contact = () => {
-            return (
-                <section id="contacto" className="min-h-screen flex flex-col justify-center px-6 relative overflow-hidden py-24">
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[100px] pointer-events-none"></div>
-                    <div className="container mx-auto relative z-10 text-center">
-                        <h2 className="text-5xl md:text-8xl font-bold mb-8">HABLEMOS</h2>
-                        <p className="text-xl text-gray-400 mb-12 max-w-2xl mx-auto">¿Buscas un perfil Junior con hambre de aprender y sólida base técnica? Estoy disponible para nuevas oportunidades.</p>
-                        <a href="mailto:jordiblloz@gmail.com" className="inline-block group relative overflow-hidden rounded-full bg-white text-black px-12 py-6 text-xl font-bold hover:scale-105 transition-transform interactive">
-                            <span className="relative z-10 group-hover:text-white transition-colors">ENVIAR CORREO</span>
-                            <div className="absolute inset-0 bg-purple-600 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                        </a>
-                        <div className="mt-24 flex flex-wrap justify-center gap-8 md:gap-16 text-gray-500 uppercase tracking-widest text-sm font-bold">
-                            <a href="https://github.com/JBLOZ" target="_blank" className="hover:text-purple-400 transition-colors interactive">Github</a>
-                            <a href="https://linkedin.com/in/jbloz" target="_blank" className="hover:text-purple-400 transition-colors interactive">LinkedIn</a>
-                        </div>
-                    </div>
-                     <footer className="absolute bottom-6 w-full text-center text-gray-600 text-xs uppercase tracking-wider">
-                        &copy; 2025 Jordi Blasco Lozano. Alicante, España.
-                    </footer>
-                </section>
-            );
-        };
-
-        // --- Nueva Vista: Archivo de Proyectos ---
-        const ProjectArchive = ({ setView }) => {
-            useEffect(() => {
-                window.scrollTo(0, 0);
-            }, []);
-
-            return (
-                <motion.div 
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                    className="min-h-screen py-32 px-6"
-                >
-                    <div className="container mx-auto">
-                        <div className="mb-16 text-center">
-                            <motion.div 
-                                initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-                                className="inline-block mb-6"
-                            >
-                                <button 
-                                    onClick={() => setView('home')}
-                                    className="text-purple-400 hover:text-white flex items-center gap-2 uppercase tracking-widest text-sm font-bold mb-8 mx-auto transition-colors"
+                            <p class="mono">
+                                Alicante · Ingeniería en Inteligencia Artificial
+                                · Machine Learning · Cloud
+                            </p>
+                            <h1>
+                                Construyo productos y sistemas de IA con foco
+                                técnico y criterio práctico.
+                            </h1>
+                            <p class="lead">
+                                Soy Jordi Blasco Lozano, estudiante de 3º de
+                                Ingeniería en Inteligencia Artificial en la
+                                Universidad de Alicante. Trabajo en proyectos de
+                                machine learning, automatización, desarrollo y
+                                despliegue cloud con una base sólida en software
+                                y datos.
+                            </p>
+                            <div class="hero-actions">
+                                <a class="button" href="#proyectos"
+                                    >Ver proyectos</a
                                 >
-                                    <i data-lucide="arrow-left" className="w-4 h-4"></i> Volver al Inicio
-                                </button>
-                            </motion.div>
-                            <h1 className="text-4xl md:text-6xl font-bold mb-6">ARCHIVO DE <span className="text-purple-500">PROYECTOS</span></h1>
-                            <p className="text-gray-400 max-w-2xl mx-auto">
-                                Una colección completa de mis trabajos académicos, experimentos personales y desarrollos profesionales.
+                                <a
+                                    class="button-secondary"
+                                    href="https://jbloz.github.io/portfolio/cv/cv_es.pdf"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    >Descargar CV</a
+                                >
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="quick-facts">
+                                <div class="fact">
+                                    <strong>Outlier AI</strong>
+                                    <span
+                                        >Investigación en RLHF y evaluación de
+                                        modelos.</span
+                                    >
+                                </div>
+                                <div class="fact">
+                                    <strong>AWS + Docker</strong>
+                                    <span
+                                        >Infraestructura, servicios y despliegue
+                                        reproducible.</span
+                                    >
+                                </div>
+                                <div class="fact">
+                                    <strong>Python first</strong>
+                                    <span
+                                        >ML, automatización, análisis y
+                                        prototipado rápido.</span
+                                    >
+                                </div>
+                            </div>
+                            <div class="inline-links" style="margin-top: 18px">
+                                <a
+                                    class="text-link"
+                                    href="https://github.com/JBLOZ"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    >GitHub</a
+                                >
+                                <a
+                                    class="text-link"
+                                    href="https://linkedin.com/in/jbloz"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    >LinkedIn</a
+                                >
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="side-column">
+                        <aside class="profile-card panel">
+                            <img
+                                src="https://avatars.githubusercontent.com/u/123325702?v=4"
+                                alt="Foto de Jordi Blasco"
+                            />
+                            <div class="profile-meta">
+                                <div>
+                                    <h3>Perfil</h3>
+                                    <p class="section-copy">
+                                        Perfil junior con orientación a
+                                        producto, aprendizaje continuo y buena
+                                        base en IA, desarrollo y sistemas.
+                                    </p>
+                                </div>
+                                <div class="meta-row">
+                                    <span>Ubicación</span
+                                    ><strong>Alicante, España</strong>
+                                </div>
+                                <div class="meta-row">
+                                    <span>Idiomas</span
+                                    ><strong>Español · Inglés B2</strong>
+                                </div>
+                                <div class="meta-row">
+                                    <span>Disponibilidad</span
+                                    ><strong>Prácticas / Junior</strong>
+                                </div>
+                            </div>
+                        </aside>
+
+                        <aside class="stats-panel panel">
+                            <h3>En qué estoy trabajando</h3>
+                            <div class="stats-grid">
+                                <div class="stat">
+                                    <strong>Reinforcement Learning</strong>
+                                    <span
+                                        >Evaluación de respuestas y datasets de
+                                        calidad para modelos generativos.</span
+                                    >
+                                </div>
+                                <div class="stat">
+                                    <strong>Automatización con LLMs</strong>
+                                    <span
+                                        >Workflows con n8n, APIs y asistentes
+                                        orientados a tareas reales.</span
+                                    >
+                                </div>
+                                <div class="stat">
+                                    <strong>Portfolio técnico</strong>
+                                    <span
+                                        >Proyectos académicos y personales con
+                                        foco en implementación.</span
+                                    >
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
+                </div>
+            </section>
+
+            <section id="sobre-mi">
+                <div class="container">
+                    <div class="section-head">
+                        <div>
+                            <h2>Sobre mí</h2>
+                            <p class="section-copy">
+                                Me interesa la inteligencia artificial aplicada:
+                                sistemas que funcionen, se desplieguen bien y
+                                resuelvan problemas concretos. Combino formación
+                                universitaria con proyectos propios y
+                                experiencia práctica.
                             </p>
                         </div>
+                    </div>
 
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {ALL_PROJECTS.map((p, i) => (
-                                <ProjectCard key={i} index={i} {...p} dense={true} />
-                            ))}
+                    <div class="about-grid">
+                        <article class="panel">
+                            <h3>Enfoque</h3>
+                            <p class="section-copy">
+                                Trabajo cómodo entre prototipado y ejecución:
+                                desde modelos de visión o clasificación hasta
+                                automatizaciones con APIs, pipelines y
+                                despliegue en cloud. Me gusta entender el
+                                sistema completo, no solo una parte.
+                            </p>
+                        </article>
+                        <article class="panel">
+                            <h3>Lo que aporto</h3>
+                            <p class="section-copy">
+                                Base técnica en Python, machine learning y
+                                estructuras de software, junto con capacidad
+                                para aprender rápido, documentar bien y mantener
+                                una ejecución constante en proyectos largos.
+                            </p>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <section id="stack">
+                <div class="container">
+                    <div class="section-head">
+                        <div>
+                            <h2>Stack</h2>
+                            <p class="section-copy">
+                                Estas son las áreas en las que he trabajado con
+                                más frecuencia durante la carrera, prácticas y
+                                proyectos personales.
+                            </p>
                         </div>
                     </div>
-                </motion.div>
-            );
-        }
 
-        // --- Main App ---
-        const App = () => {
-            const [view, setView] = useState('home'); // 'home' | 'projects'
+                    <div class="skill-groups">
+                        <article class="skill-group">
+                            <h3>IA y datos</h3>
+                            <ul>
+                                <li>Python</li>
+                                <li>PyTorch</li>
+                                <li>Hugging Face</li>
+                                <li>Scikit-learn</li>
+                                <li>Pandas y NumPy</li>
+                                <li>Matlab</li>
+                            </ul>
+                        </article>
+                        <article class="skill-group">
+                            <h3>Cloud y sistemas</h3>
+                            <ul>
+                                <li>AWS EC2, S3, VPC</li>
+                                <li>Docker</li>
+                                <li>Linux</li>
+                                <li>Git</li>
+                                <li>CI/CD</li>
+                            </ul>
+                        </article>
+                        <article class="skill-group">
+                            <h3>Desarrollo</h3>
+                            <ul>
+                                <li>JavaScript</li>
+                                <li>React</li>
+                                <li>C++</li>
+                                <li>SQL y NoSQL</li>
+                                <li>REST APIs</li>
+                                <li>n8n</li>
+                            </ul>
+                        </article>
+                        <article class="skill-group">
+                            <h3>Trabajo</h3>
+                            <ul>
+                                <li>Investigación</li>
+                                <li>Resolución de problemas</li>
+                                <li>Trabajo en equipo</li>
+                                <li>Comunicación técnica</li>
+                                <li>Inglés B2 Oxford</li>
+                            </ul>
+                        </article>
+                    </div>
+                </div>
+            </section>
 
-            useEffect(() => {
-                if (typeof Lenis !== 'undefined') {
-                    const lenis = new Lenis({
-                        duration: 1.2,
-                        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-                        direction: 'vertical',
-                        smooth: true,
-                        smoothTouch: false,
-                    });
-                    function raf(time) {
-                        lenis.raf(time);
-                        requestAnimationFrame(raf);
-                    }
-                    requestAnimationFrame(raf);
-                    return () => lenis.destroy();
-                }
-            }, []);
+            <section id="experiencia">
+                <div class="container experience-grid">
+                    <div>
+                        <div class="section-head" style="margin-bottom: 18px">
+                            <div>
+                                <h2>Experiencia</h2>
+                                <p class="section-copy">
+                                    Una experiencia principal, pero muy alineada
+                                    con el trabajo real sobre modelos y calidad
+                                    de datos.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="timeline">
+                            <article class="timeline-item">
+                                <div class="timeline-top">
+                                    <div>
+                                        <h3>
+                                            Investigador de Aprendizaje por
+                                            Refuerzo
+                                        </h3>
+                                        <p class="timeline-copy">Outlier AI</p>
+                                    </div>
+                                    <span class="timeline-date"
+                                        >2024 · Actualidad</span
+                                    >
+                                </div>
+                                <p class="timeline-copy">
+                                    Contribuyo a proyectos de RLHF evaluando
+                                    respuestas, revisando calidad y generando
+                                    señales útiles para el entrenamiento y
+                                    ajuste de modelos de IA generativa.
+                                </p>
+                            </article>
+                        </div>
+                    </div>
 
-            useEffect(() => {
-                if (window.lucide) window.lucide.createIcons();
-            }, [view]);
+                    <div
+                        class="education-grid"
+                        id="formacion"
+                        style="grid-template-columns: 1fr"
+                    >
+                        <div class="section-head" style="margin-bottom: 18px">
+                            <div>
+                                <h2>Formación</h2>
+                                <p class="section-copy">
+                                    Base académica enfocada en inteligencia
+                                    artificial, machine learning y desarrollo.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="timeline">
+                            <article class="timeline-item">
+                                <div class="timeline-top">
+                                    <div>
+                                        <h3>
+                                            Grado en Ingeniería en Inteligencia
+                                            Artificial
+                                        </h3>
+                                        <p class="timeline-copy">
+                                            Universidad de Alicante
+                                        </p>
+                                    </div>
+                                    <span class="timeline-date"
+                                        >2022 · Actualidad</span
+                                    >
+                                </div>
+                                <p class="timeline-copy">
+                                    3º curso, con todas las asignaturas
+                                    superadas. Formación en machine learning,
+                                    deep learning, algoritmos, estructuras de
+                                    datos y desarrollo de software.
+                                </p>
+                            </article>
+                            <article class="timeline-item">
+                                <div class="timeline-top">
+                                    <div>
+                                        <h3>Oxford Test of English · B2</h3>
+                                        <p class="timeline-copy">
+                                            Certificación oficial
+                                        </p>
+                                    </div>
+                                    <span class="timeline-date">Mayo 2024</span>
+                                </div>
+                                <p class="timeline-copy">
+                                    Nivel B2 de inglés acreditado con referencia
+                                    oficial 263339.
+                                </p>
+                            </article>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-            return (
-                <>
-                    <CustomCursor />
-                    <Background3D />
-                    <Navbar view={view} setView={setView} />
-                    <main>
-                        <AnimatePresence mode="wait">
-                            {view === 'home' ? (
-                                <motion.div 
-                                    key="home"
-                                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            <section id="proyectos">
+                <div class="container">
+                    <div class="section-head">
+                        <div>
+                            <h2>Proyectos</h2>
+                            <p class="section-copy">
+                                Una selección de trabajos académicos, técnicos y
+                                personales. Puedes alternar entre destacados y
+                                archivo completo.
+                            </p>
+                        </div>
+                        <p class="mono" id="projectsCount">
+                            4 proyectos visibles
+                        </p>
+                    </div>
+
+                    <div class="projects-toolbar">
+                        <div
+                            class="filter-group"
+                            aria-label="Filtro de proyectos"
+                        >
+                            <button
+                                class="filter-button active"
+                                data-filter="featured"
+                            >
+                                Destacados
+                            </button>
+                            <button class="filter-button" data-filter="all">
+                                Todos
+                            </button>
+                        </div>
+                        <a
+                            class="button-secondary"
+                            href="https://github.com/JBLOZ"
+                            target="_blank"
+                            rel="noreferrer"
+                            >Ver GitHub completo</a
+                        >
+                    </div>
+
+                    <div class="projects-grid" id="projectsGrid"></div>
+                </div>
+            </section>
+
+            <section id="contacto">
+                <div class="container contact-grid">
+                    <article class="contact-card">
+                        <h2
+                            style="
+                                font-size: clamp(1.7rem, 2.4vw, 2.4rem);
+                                margin-bottom: 12px;
+                            "
+                        >
+                            Contacto
+                        </h2>
+                        <p class="contact-copy">
+                            Si buscas un perfil junior con buena base técnica,
+                            facilidad para adaptarse y ganas de aportar desde el
+                            primer día, estaré encantado de hablar.
+                        </p>
+                        <div class="contact-actions" style="margin-top: 20px">
+                            <a class="button" href="mailto:jordiblloz@gmail.com"
+                                >Enviar correo</a
+                            >
+                            <a
+                                class="button-secondary"
+                                href="https://linkedin.com/in/jbloz"
+                                target="_blank"
+                                rel="noreferrer"
+                                >LinkedIn</a
+                            >
+                        </div>
+                    </article>
+                    <article class="contact-card">
+                        <h3>Datos</h3>
+                        <ul class="contact-list">
+                            <li>
+                                <span>Email</span
+                                ><strong
+                                    ><a href="mailto:jordiblloz@gmail.com"
+                                        >jordiblloz@gmail.com</a
+                                    ></strong
                                 >
-                                    <Hero />
-                                    <About />
-                                    <Skills />
-                                    <Experience />
-                                    <Education />
-                                    <FeaturedProjects setView={setView} />
-                                    <Contact />
-                                </motion.div>
-                            ) : (
-                                <ProjectArchive key="projects" setView={setView} />
-                            )}
-                        </AnimatePresence>
-                    </main>
-                </>
-            );
-        };
+                            </li>
+                            <li>
+                                <span>GitHub</span
+                                ><strong
+                                    ><a
+                                        href="https://github.com/JBLOZ"
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        >@JBLOZ</a
+                                    ></strong
+                                >
+                            </li>
+                            <li>
+                                <span>LinkedIn</span
+                                ><strong
+                                    ><a
+                                        href="https://linkedin.com/in/jbloz"
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        >/in/jbloz</a
+                                    ></strong
+                                >
+                            </li>
+                            <li>
+                                <span>Ubicación</span
+                                ><strong>Alicante, España</strong>
+                            </li>
+                        </ul>
+                    </article>
+                </div>
+            </section>
+        </main>
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
+        <footer class="site-footer">
+            <div class="container footer-row">
+                <span>© <span id="year"></span> Jordi Blasco Lozano</span>
+                <span>Portfolio personal · IA, software y cloud</span>
+            </div>
+        </footer>
+
+        <script>
+            const projects = [
+                {
+                    title: "Infraestructura Cloud AWS",
+                    year: "2025",
+                    tags: ["AWS", "Docker", "EC2", "VPC"],
+                    desc: "Despliegue de infraestructura cloud con VPCs, balanceadores, auto-scaling y almacenamiento S3 orientado a alta disponibilidad.",
+                    img: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=1200",
+                    link: "https://github.com/JBLOZ/portfolio/tree/main/proyectos/aws",
+                    featured: true,
+                },
+                {
+                    title: "E-commerce con IA",
+                    year: "2025",
+                    tags: ["Python", "PyTorch", "Hugging Face"],
+                    desc: "Plataforma de comercio electrónico con búsqueda de productos por texto e imagen usando modelos preentrenados de visión artificial.",
+                    img: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&q=80&w=1200",
+                    link: "https://github.com/JBLOZ/py-ecommerce-software-proyect",
+                    featured: true,
+                },
+                {
+                    title: "Bot de Trading y Sentimiento",
+                    year: "2025",
+                    tags: ["n8n", "LLMs", "Telegram API"],
+                    desc: "Bot autónomo que analiza noticias financieras y sentimiento de mercado para generar señales de compra y venta en tiempo real.",
+                    img: "https://images.unsplash.com/photo-1642543492481-44e81e3914a7?auto=format&fit=crop&q=80&w=1200",
+                    link: "https://github.com/JBLOZ/portfolio/tree/main/proyectos/n8n/p_01",
+                    featured: true,
+                },
+                {
+                    title: "Detección Médica con ResNet",
+                    year: "2024",
+                    tags: ["Matlab", "Deep Learning", "CNN"],
+                    desc: "Implementación de ResNet-50 para detección de cáncer de piel con resultados de precisión en el rango del 80 al 85%.",
+                    img: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=1200",
+                    link: "https://github.com/JBLOZ/heart-attack-fuzzy-system",
+                    featured: true,
+                },
+                {
+                    title: "Sistema Fuzzy Robot 2D",
+                    year: "2024",
+                    tags: ["Python", "Fuzzy Logic", "Robotics"],
+                    desc: "Sistema de lógica difusa para navegación autónoma de un robot 2D con reglas de control.",
+                    img: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=80&w=1200",
+                    link: "https://github.com/JBLOZ/ROBOT-fuzzy-and-basiclogic",
+                    featured: false,
+                },
+                {
+                    title: "Clasificación Zoo Dataset",
+                    year: "2024",
+                    tags: ["Python", "Scikit-learn", "ML"],
+                    desc: "Comparativa de algoritmos de clasificación multiclase para especies animales sobre el zoo dataset.",
+                    img: "https://images.unsplash.com/photo-1474511320723-9a56873867b5?auto=format&fit=crop&q=80&w=1200",
+                    link: "https://github.com/JBLOZ/portfolio/tree/main/proyectos/aprendizaje_automatico/p_02",
+                    featured: false,
+                },
+                {
+                    title: "Sistema Experto Cardíaco",
+                    year: "2024",
+                    tags: ["Python", "Expert Systems", "Healthcare"],
+                    desc: "Sistema experto difuso para estimar riesgo de ataque cardíaco a partir de variables médicas.",
+                    img: "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&q=80&w=1200",
+                    link: "https://github.com/JBLOZ/heart-attack-fuzzy-system",
+                    featured: false,
+                },
+                {
+                    title: "Pacman IA con CNN",
+                    year: "2024",
+                    tags: ["Python", "CNN", "Game AI"],
+                    desc: "Agente para Pacman usando redes convolucionales y poda Alfa-Beta para la toma de decisiones.",
+                    img: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=1200",
+                    link: "https://github.com/JBLOZ/PACMAN-CNN-Alphabeta",
+                    featured: false,
+                },
+                {
+                    title: "Videojuego Unreal Engine 4",
+                    year: "2023",
+                    tags: ["UE4", "C++", "Blueprints"],
+                    desc: "Desarrollo de videojuego 3D con físicas, niveles y lógica de gameplay en Unreal Engine 4.",
+                    img: "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?auto=format&fit=crop&q=80&w=1200",
+                    link: "https://www.youtube.com/watch?v=VaXI3NCUENQ",
+                    featured: false,
+                },
+                {
+                    title: "Graph Matching",
+                    year: "2023",
+                    tags: ["Python", "NetworkX", "Graphs"],
+                    desc: "Algoritmos para encontrar similitudes estructurales entre grafos y analizar emparejamientos.",
+                    img: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&q=80&w=1200",
+                    link: "https://github.com/JBLOZ/graph_matching",
+                    featured: false,
+                },
+                {
+                    title: "Clustering y Data Analysis",
+                    year: "2023",
+                    tags: ["Python", "Pandas", "K-Means"],
+                    desc: "Análisis exploratorio y segmentación de datos con técnicas no supervisadas.",
+                    img: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=1200",
+                    link: "https://github.com/JBLOZ/basic-clustering-and-DA",
+                    featured: false,
+                },
+                {
+                    title: "Calendario en C++",
+                    year: "2023",
+                    tags: ["C++", "OOP", "Algorithms"],
+                    desc: "Sistema de gestión de fechas y eventos implementado desde cero en C++.",
+                    img: "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&q=80&w=1200",
+                    link: "https://github.com/JBLOZ/IA/tree/main/2doAnyo/1erCuatri/progAvanzada/practica3",
+                    featured: false,
+                },
+                {
+                    title: "Octree con PyVista",
+                    year: "2023",
+                    tags: ["Python", "3D Viz", "Spatial"],
+                    desc: "Visualización interactiva de estructuras espaciales Octree con PyVista.",
+                    img: "https://images.unsplash.com/photo-1470075801209-17f9ec0cada6?auto=format&fit=crop&q=80&w=1200",
+                    link: "https://github.com/JBLOZ/Oc-tree-y-PyVista",
+                    featured: false,
+                },
+                {
+                    title: "Repositorio Universitario",
+                    year: "2022-2025",
+                    tags: ["University", "Practice", "Algorithms"],
+                    desc: "Colección de prácticas y ejercicios de la carrera: algoritmos, IA y estructuras de datos.",
+                    img: "https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?auto=format&fit=crop&q=80&w=1200",
+                    link: "https://github.com/JBLOZ/IA",
+                    featured: false,
+                },
+            ];
+
+            const projectsGrid = document.getElementById("projectsGrid");
+            const projectsCount = document.getElementById("projectsCount");
+            const filterButtons = Array.from(
+                document.querySelectorAll("[data-filter]"),
+            );
+            const yearNode = document.getElementById("year");
+            const siteHeader = document.getElementById("siteHeader");
+            const menuToggle = document.getElementById("menuToggle");
+
+            function projectCard(project) {
+                const tags = project.tags
+                    .map((tag) => `<span class="tag">${tag}</span>`)
+                    .join("");
+                return `
+        <article class="project-card">
+          <img src="${project.img}" alt="${project.title}" loading="lazy" />
+          <div class="project-body">
+            <div class="project-top">
+              <h3>${project.title}</h3>
+              <span class="project-year">${project.year}</span>
+            </div>
+            <p class="project-description">${project.desc}</p>
+            <div class="tag-list">${tags}</div>
+            <div class="project-links">
+              <a class="text-link" href="${project.link}" target="_blank" rel="noreferrer">Ver proyecto</a>
+              <span class="status">${project.featured ? "Destacado" : "Archivo"}</span>
+            </div>
+          </div>
+        </article>
+      `;
+            }
+
+            function renderProjects(filter) {
+                const filtered =
+                    filter === "featured"
+                        ? projects.filter((project) => project.featured)
+                        : projects;
+                projectsGrid.innerHTML = filtered.map(projectCard).join("");
+                projectsCount.textContent = `${filtered.length} proyecto${filtered.length === 1 ? "" : "s"} visibles`;
+                filterButtons.forEach((button) => {
+                    button.classList.toggle(
+                        "active",
+                        button.dataset.filter === filter,
+                    );
+                });
+            }
+
+            filterButtons.forEach((button) => {
+                button.addEventListener("click", () =>
+                    renderProjects(button.dataset.filter),
+                );
+            });
+
+            menuToggle.addEventListener("click", () => {
+                siteHeader.classList.toggle("open");
+            });
+
+            document.querySelectorAll(".nav a").forEach((link) => {
+                link.addEventListener("click", () =>
+                    siteHeader.classList.remove("open"),
+                );
+            });
+
+            yearNode.textContent = new Date().getFullYear();
+            renderProjects("featured");
+        </script>
+    </body>
 </html>
