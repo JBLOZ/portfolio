@@ -1,0 +1,35 @@
+{
+  "latex-workshop.latex.recipe.default": "xelatex_with_clean",
+  "latex-workshop.latex.tools": [
+    {
+      "name": "xelatex_miktex",
+      "command": "C:/Users/jordi/AppData/Local/Programs/MiKTeX/miktex/bin/x64/xelatex.exe",
+      "args": [
+        "-synctex=1",
+        "-interaction=nonstopmode",
+        "-file-line-error",
+        "-output-directory=%DIR%",
+        "%DOC%"
+      ]
+    }
+  ],
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "xelatex_with_clean",
+      "tools": [
+        "xelatex_miktex"
+      ]
+    }
+  ],
+  "latex-workshop.latex.autoClean.run": "onBuilt",
+  "latex-workshop.latex.clean.fileTypes": [
+    "*.aux",
+    "*.bbl",
+    "*.blg",
+    "*.fdb_latexmk",
+    "*.fls",
+    "*.log",
+    "*.out",
+    "*.xdv"
+  ]
+}
